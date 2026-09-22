@@ -1,5 +1,4 @@
-﻿// These 'using' lines make types from our own project available without full namespace paths
-using MoneyTracking.Domain;
+﻿using MoneyTracking.Domain;
 using MoneyTracking.Services;
 
 // ItemCollection holds all items in memory while the program is running

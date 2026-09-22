@@ -2,7 +2,7 @@ using MoneyTracking.Domain;
 
 namespace MoneyTracking.Services;
 
-// Keeps all list operations in one place so Program.cs only handles console I/O
+// Owns all in-memory list operations; callers own their own I/O
 public class ItemCollection
 {
     // readonly means _items cannot be replaced with a different list after construction

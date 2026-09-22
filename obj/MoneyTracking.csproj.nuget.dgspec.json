@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/kim/GitRepos/MoneyTracking/MoneyTracking/MoneyTracking.csproj": {}
+    "/Users/kim/GitRepos/MoneyTracking/MoneyTracking.csproj": {}
   },
   "projects": {
-    "/Users/kim/GitRepos/MoneyTracking/MoneyTracking/MoneyTracking.csproj": {
+    "/Users/kim/GitRepos/MoneyTracking/MoneyTracking.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/kim/GitRepos/MoneyTracking/MoneyTracking/MoneyTracking.csproj",
+        "projectUniqueName": "/Users/kim/GitRepos/MoneyTracking/MoneyTracking.csproj",
         "projectName": "MoneyTracking",
-        "projectPath": "/Users/kim/GitRepos/MoneyTracking/MoneyTracking/MoneyTracking.csproj",
+        "projectPath": "/Users/kim/GitRepos/MoneyTracking/MoneyTracking.csproj",
         "packagesPath": "/Users/kim/.nuget/packages/",
-        "outputPath": "/Users/kim/GitRepos/MoneyTracking/MoneyTracking/obj/",
+        "outputPath": "/Users/kim/GitRepos/MoneyTracking/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/kim/.nuget/NuGet/NuGet.Config"
