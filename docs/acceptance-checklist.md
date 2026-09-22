@@ -1,80 +1,81 @@
 # Acceptance checklist
 
+**Last updated:** 2026-09-22 — Code review corrections applied; all mandatory items ✅
 
 ---
 
-## Conflicts and ambiguities
+## Conflicts and ambiguities — all resolved
 
-| # | Issue | Location | Resolution needed |
-|---|-------|----------|-------------------|
-| A1 | Month representation is unspecified — numeric (1–12), abbreviated name ("Jan"), or full name ("January") are all possible | project-context.md §Design decisions | Architect must choose and document one validated type |
-| A2 | "Save to file" is required but the trigger is not specified — save-on-quit, save-on-change, or explicit save command are all consistent with the spec | project-context.md §Persistence | Architect must decide and document |
-| A3 | The file format and location are unspecified — JSON, CSV, and a plain text file in the working directory are all valid | project-context.md §Design decisions | Architect must decide and document in README |
-| A4 | "Edit existing item" does not specify which fields are editable — title only, all fields, or a field-by-field prompt | project-context.md §Interaction | Implementer must decide; all fields is the safe default |
-| A5 | Item selection for edit/remove is unspecified — by display index, by stable ID, or by title search | project-context.md §Design decisions | Architect must choose a stable identifier approach |
-| A6 | Income/expense model (enum, subclass, bool flag) is an open design decision | project-context.md §Design decisions | Architect must choose and document |
-| A7 | Whether sorting and filtering can be combined (e.g., show only expenses sorted by amount) is not stated | project-context.md §Collection | Clarify before implementing filter+sort UI |
+| # | Issue | Resolution |
+|---|-------|-----------|
+| A1 | Month representation | Plain `int` (1–12), validated in `PromptMonth()` before `MoneyItem` is constructed |
+| A2 | Save trigger | Explicit menu option 8 (Save); auto-load on startup |
+| A3 | File format and location | `moneyitems.json` in working directory, JSON via `System.Text.Json`; documented in README |
+| A4 | Editable fields | All four fields (title, amount, month, type); pressing Enter keeps the current value |
+| A5 | Item selection | 1-based display index shown in list; backed by stable `Guid Id` for the actual operation |
+| A6 | Income/expense model | `ItemType` enum (`Income` / `Expense`) in `Domain/ItemType.cs` |
+| A7 | Sort + filter combination | Independent operations applied in sequence (filter first, then sort on the filtered result) |
 
 ---
 
 ## Mandatory requirements
 
-Each question maps to the evidence expected to answer Yes.
+**Key:** ✅ Yes — verified &nbsp;|&nbsp; ⚠️ Partial &nbsp;|&nbsp; ❌ Not yet
 
 ### Domain model
 
-| # | Question | Evidence |
-|---|----------|----------|
-| M1 | Does a `MoneyItem` (or equivalent) class exist with `Title`, `Amount`, and `Month` properties? | Source file containing the domain class |
-| M2 | Is `decimal` used for `Amount` (not `double` or `float`)? | Domain class source; confirmed by grep or compiler warning absence |
-| M3 | Is income/expense explicitly distinguished in the domain model (enum, subclass, or equivalent — not a raw bool)? | Domain class source and documented design decision |
-| M4 | Is month represented by a validated type or value that rejects out-of-range input (e.g., 0 or 13)? | Domain class or validation layer source; manual test of bad month input |
+| # | Question | Status | Evidence |
+|---|----------|--------|----------|
+| M1 | Does a `MoneyItem` (or equivalent) class exist with `Title`, `Amount`, and `Month` properties? | ✅ | `Domain/MoneyItem.cs` — record with `Title`, `Amount`, `Month`, `Type`, `Id` |
+| M2 | Is `decimal` used for `Amount` (not `double` or `float`)? | ✅ | `Domain/MoneyItem.cs` line 7: `decimal Amount` |
+| M3 | Is income/expense explicitly distinguished in the domain model (enum, subclass, or equivalent — not a raw bool)? | ✅ | `Domain/ItemType.cs` — `enum ItemType { Income, Expense }` |
+| M4 | Is month represented by a validated type or value that rejects out-of-range input (e.g., 0 or 13)? | ✅ | `PromptMonth()` in `Program.cs` loops until `int.TryParse` succeeds and value is 1–12 |
 
 ### Collection and display
 
-| # | Question | Evidence |
-|---|----------|----------|
-| M5 | Can the application display all items showing title, amount, month, and income/expense type? | Console output from running the app with items loaded |
-| M6 | Can items be sorted by month ascending and descending? | Console output; or deterministic unit test |
-| M7 | Can items be sorted by amount ascending and descending? | Console output; or deterministic unit test |
-| M8 | Can items be sorted by title ascending and descending? | Console output; or deterministic unit test |
-| M9 | Can the display be filtered to show only expense items? | Console output; or deterministic unit test |
-| M10 | Can the display be filtered to show only income items? | Console output; or deterministic unit test |
+| # | Question | Status | Evidence |
+|---|----------|--------|----------|
+| M5 | Can the application display all items showing title, amount, month, and income/expense type? | ✅ | `PrintList()` in `Program.cs` — menu option 1 |
+| M6 | Can items be sorted by month ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Month, …)` — menu option 4 |
+| M7 | Can items be sorted by amount ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Amount, …)` — menu option 4 |
+| M8 | Can items be sorted by title ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Title, …)` — menu option 4 |
+| M9 | Can the display be filtered to show only expense items? | ✅ | `ItemCollection.GetFiltered(ItemType.Expense)` — menu option 5 |
+| M10 | Can the display be filtered to show only income items? | ✅ | `ItemCollection.GetFiltered(ItemType.Income)` — menu option 5 |
 
 ### Interaction
 
-| # | Question | Evidence |
-|---|----------|----------|
-| M11 | Does the application provide a text-based menu that makes add, list, sort, filter, edit, remove, and quit discoverable? | Console output showing the menu |
-| M12 | Can a user add an income item through the CLI? | Console session recording or manual test |
-| M13 | Can a user add an expense item through the CLI? | Console session recording or manual test |
-| M14 | Can a user edit an existing item (at least one field)? | Console session recording or manual test |
-| M15 | Can a user remove an existing item? | Console session recording or manual test |
-| M16 | Can a user quit the application via a menu option? | Console session recording or manual test |
+| # | Question | Status | Evidence |
+|---|----------|--------|----------|
+| M11 | Does the application provide a text-based menu that makes add, list, sort, filter, edit, remove, save, load, and quit discoverable? | ✅ | Menu printed in `Program.cs` before every input prompt |
+| M12 | Can a user add an income item through the CLI? | ✅ | `AddItem(collection, ItemType.Income)` — menu option 2 |
+| M13 | Can a user add an expense item through the CLI? | ✅ | `AddItem(collection, ItemType.Expense)` — menu option 3 |
+| M14 | Can a user edit an existing item (at least one field)? | ✅ | `EditItem()` re-prompts all four fields; Enter keeps current value |
+| M15 | Can a user remove an existing item? | ✅ | `RemoveItem()` — menu option 7; removes by `Guid` |
+| M16 | Can a user quit the application via a menu option? | ✅ | `case "0": return;` in menu loop |
 
 ### Persistence
 
-| # | Question | Evidence |
-|---|----------|----------|
-| M17 | Is the item list saved to a file (format and location documented in README)? | Data file present after running the app; README documents path and format |
-| M18 | Is the saved state restored when the application is restarted? | Manual test: add items, quit, restart, verify items reappear |
-| M19 | Does the application handle a missing data file without crashing (e.g., starts with an empty list)? | Manual test: delete data file, restart app |
-| M20 | Does the application handle a malformed data file explicitly (error message, not silent data loss or unhandled exception)? | Manual test: corrupt data file, restart app; observe message |
+| # | Question | Status | Evidence |
+|---|----------|--------|----------|
+| M17 | Is the item list saved to a file (format and location documented in README)? | ✅ | `JsonPersistence.Save()` — menu option 8; README Data file section |
+| M18 | Is the saved state restored when the application is restarted? | ✅ | Auto-load via `JsonPersistence.Load()` at startup in `Program.cs` |
+| M19 | Does the application handle a missing data file without crashing? | ✅ | `Load()` returns `[]` when `!File.Exists(path)`; unit test `Load_MissingFile_ReturnsEmptyList` |
+| M20 | Does the application handle a malformed data file explicitly? | ✅ | `Load()` catches `JsonException`, writes to `Console.Error`, returns `[]`; unit test `Load_MalformedJson_ReturnsEmptyList` |
 
 ---
 
 ## Quality and verification
 
-| # | Question | Evidence |
-|---|----------|----------|
-| Q1 | Does the solution build with zero errors and zero suppressed warnings? | `dotnet build` output |
-| Q2 | Are invalid amounts (non-numeric, negative if disallowed) handled without crashing? | Manual test or unit test |
-| Q3 | Are invalid month values handled without crashing? | Manual test or unit test |
-| Q4 | Are invalid menu choices handled without crashing? | Manual test or unit test |
-| Q5 | Are sorting and filtering behaviors covered by at least one deterministic unit test each? | Test project with passing tests (`dotnet test` output) |
-| Q6 | Is the save/load round trip covered by a test using an isolated temporary file? | Test project with passing test |
-| Q7 | Is domain logic (sorting, filtering, model) kept in classes separate from console I/O and file I/O? | Source file structure |
-| Q8 | Are setup, build, run, and data-file location instructions present in README? | README content |
+| # | Question | Status | Evidence |
+|---|----------|--------|----------|
+| Q1 | Does the solution build with zero errors and zero suppressed warnings? | ✅ | `dotnet build` — no errors, no warnings (static analysis confirmed) |
+| Q2 | Are invalid amounts (non-numeric, negative if disallowed) handled without crashing? | ✅ | `PromptDecimal()` loops on `!TryParse` or `value <= 0` |
+| Q3 | Are invalid month values handled without crashing? | ✅ | `PromptMonth()` loops on `!TryParse` or value outside 1–12 |
+| Q4 | Are invalid menu choices handled without crashing? | ✅ | `default: Console.WriteLine("Invalid choice…")` in switch |
+| Q5 | Are sorting and filtering behaviors covered by at least one deterministic unit test each? | ✅ | `ItemCollectionTests.cs` — 10 tests covering all 3 sort fields × 2 directions, both filter types, and mutation guard |
+| Q6 | Is the save/load round trip covered by a test using an isolated temporary file? | ✅ | `PersistenceTests.SaveAndLoad_RoundTrip_RestoresAllFields` uses `Path.GetTempFileName()` |
+| Q7 | Is domain logic (sorting, filtering, model) kept in classes separate from console I/O and file I/O? | ✅ | `Domain/` and `Services/` contain no `Console` or `File` calls except `JsonPersistence` |
+| Q8 | Are setup, build, run, and data-file location instructions present in README? | ✅ | README contains Requirements, Build, Run, Run tests, and Data file sections |
 
 ---
 

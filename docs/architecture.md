@@ -139,19 +139,86 @@ Display format per row: `[index]  [Month]  [Title]  [Amount]  [Income/Expense]`
 
 | File | Slice |
 |------|-------|
-| `MoneyTracking/Services/JsonPersistence.cs` | Persistence slice |
+| `MoneyTracking/Services/JsonPersistence.cs` | Slice 2 — Persistence |
 | `MoneyTracking.Tests/ItemCollectionTests.cs` | Test slice |
+
+---
+
+## Slice 2 goal — Save and Load (M17–M20, Q6, Q8)
+
+Produce the smallest change that makes **menu options 8 (Save) and 9 (Load)** fully working. No new domain types are needed. Only one new service file is created and `Program.cs` is updated to call it.
+
+Acceptance questions answered by this slice: **M17, M18, M19, M20, Q6** (save/load round-trip test), **Q8** (README updated with file location and format).
+
+### New file — `Services/JsonPersistence.cs`
+
+Namespace: `MoneyTracking.Services`
+
+| Member | Signature | Behaviour |
+|--------|-----------|-----------|
+| `Save` | `static void Save(IReadOnlyList<MoneyItem> items, string path)` | Serializes to JSON and writes to `path`. Throws `IOException` on disk error (caller prints message). |
+| `Load` | `static IReadOnlyList<MoneyItem> Load(string path)` | Missing file → returns empty list (satisfies M19). Malformed JSON → prints a message to `Console.Error` and returns empty list (satisfies M20). |
+
+**Serialization details:**
+- Uses `System.Text.Json` (already in .NET 10, no extra packages).
+- `JsonSerializerOptions` with `WriteIndented = true` for human-readable output.
+- The data file is `moneyitems.json` in the application's working directory (documented in README, satisfies M17).
+- `MoneyItem` is a record; the serializer handles it automatically via its constructor.
+
+**Atomic write strategy:** Write to a temp file in the same directory, then `File.Move` with `overwrite: true`. This prevents a half-written file if the process is killed mid-save.
+
+### Changes to `Program.cs`
+
+1. Remove seed data (no longer needed once Load works).
+2. Auto-load `moneyitems.json` at startup if it exists (silent; missing file is normal first run).
+3. Case `"8"` → call `JsonPersistence.Save(collection.GetAll(), DataFile)` and print confirmation.
+4. Case `"9"` → call `JsonPersistence.Load(DataFile)`, rebuild collection, print confirmation.
+5. Add `const string DataFile = "moneyitems.json";` near the top.
+
+### Changes to `README.md`
+
+Add a "Data file" section stating:
+- File name: `moneyitems.json`
+- Location: working directory when the app is run (typically the project folder with `dotnet run`).
+- Format: JSON array of `MoneyItem` objects.
+- The file is created on first explicit Save; a missing file is not an error.
+
+### New test file — `MoneyTracking.Tests/PersistenceTests.cs`
+
+Covers Q6 (save/load round-trip with an isolated temp file):
+
+| Test | Scenario |
+|------|----------|
+| `SaveAndLoad_RoundTrip` | Save two items, load from same path, assert titles/amounts/types match |
+| `Load_MissingFile_ReturnsEmpty` | Load from a non-existent path, assert empty list returned (M19) |
+| `Load_MalformedJson_ReturnsEmpty` | Write garbage bytes to a temp file, load, assert empty list returned (M20) |
+
+A test project (`MoneyTracking.Tests/`) must be created if it does not already exist, referencing the main project.
+
+---
+
+## Files to create or change in Slice 2
+
+| File | Action |
+|------|--------|
+| `MoneyTracking/Services/JsonPersistence.cs` | **Create** |
+| `MoneyTracking/Program.cs` | **Edit** — wire Save/Load, remove seed data, add auto-load |
+| `README.md` | **Edit** — add Data file section |
+| `MoneyTracking.Tests/MoneyTracking.Tests.csproj` | **Create** (if absent) |
+| `MoneyTracking.Tests/PersistenceTests.cs` | **Create** |
 
 ---
 
 ## Handoff
 
-**Summary:** Resolved all seven ambiguities from the acceptance checklist. Designed a two-layer domain + service structure with a thin `Program.cs` console loop. Slice 1 covers M1–M3, M5 (display), Q1, and Q8.
+**Summary:** Slice 1 delivered M1–M16, Q1–Q4, Q7. Slice 2 design adds `JsonPersistence.cs` (one static class, two methods), minimal edits to `Program.cs`, a README update, and three persistence tests. No new domain types. Layer boundaries are preserved: `JsonPersistence` touches only `System.IO` and `System.Text.Json`; no console calls inside it.
 
-**Files changed or proposed:** `docs/architecture.md` (created)
+**Files changed or proposed:** `docs/architecture.md` (this update)
 
-**Verification performed:** Design cross-checked against every mandatory criterion in acceptance-checklist.md and the coding rules in copilot-instructions.md (one public type per file, decimal for money, domain separate from I/O).
+**Verification performed:** Every Slice 2 file maps to at least one mandatory acceptance criterion (M17–M20, Q6, Q8). Design is consistent with decisions A2 (explicit save menu option) and A3 (JSON, working directory).
 
-**Open risks or decisions:** None blocking Slice 1. Persistence error UX (A2 save trigger) is documented and deferred.
+**Open risks or decisions:**
+- Atomic write (temp-file + move) is marginally more complex than a direct write; acceptable given that a half-written file would break M20.
+- If the user runs the app from a directory without write permission, Save will throw. A friendly error message in the `catch` block in `Program.cs` mitigates this.
 
-**Recommended next agent:** CSharp Implementer — create the five files listed under "Files to create in Slice 1", build, and verify M1–M3, M5, Q1, Q8.
+**Recommended next agent:** CSharp Implementer — implement `JsonPersistence.cs`, update `Program.cs`, update `README.md`, create the test project and `PersistenceTests.cs`, build, and run tests to verify M17–M20, Q6, Q8.

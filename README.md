@@ -1,12 +1,40 @@
-# Money Tracking Agent Starter
+# Money Tracking
 
-This starter pack adds reusable GitHub Copilot context, custom agents, prompt files, acceptance questions, and workflow documentation to a C# Money Tracking repository.
+A C# console application for tracking income and expenses by title, amount, and month.
 
-## Intended destination
-/Users/kim/Library/CloudStorage/OneDrive-EQITInnovationsSwedenAB/Desktop/UTV 26/Projects/money-tracking-agent-starter
+## Requirements
 
-## Install
-Copy the money-tracking-agent-starter folder into the Projects directory above, or copy its contents into the root of an existing C# Money Tracking repository. Preserve the .github folder.
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) or later
+
+## Build
+
+```bash
+dotnet build
+```
+
+## Run
+
+```bash
+dotnet run
+```
+
+The app starts with a numbered menu. Type the number and press Enter to choose an option.
+
+## Run tests
+
+```bash
+dotnet test MoneyTracking.Tests/MoneyTracking.Tests.csproj
+```
+
+## Data file
+
+| Property | Value |
+|----------|-------|
+| File name | `moneyitems.json` |
+| Location | Working directory when the app is run (typically the project folder with `dotnet run`) |
+| Format | JSON array of money-item objects |
+| Created by | Menu option **8. Save** — the file is not created automatically |
+| Missing file | Not an error; the app starts with an empty list on first run |
 
 ## Recommended sequence
 1. Run 01-analyze-requirements with Requirements Analyst.

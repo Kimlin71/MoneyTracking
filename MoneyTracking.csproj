@@ -7,4 +7,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+
+  <ItemGroup>
+    <!-- Exclude test project sources so the main Exe doesn't glob them -->
+    <Compile Remove="MoneyTracking.Tests/**" />
+  </ItemGroup>
+
 </Project>

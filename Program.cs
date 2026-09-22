@@ -1,14 +1,11 @@
 ﻿using MoneyTracking.Domain;
 using MoneyTracking.Services;
 
-// ItemCollection holds all items in memory while the program is running
-var collection = new ItemCollection();
+const string DataFile = "moneyitems.json";
 
-// Remove seed data once persistence is implemented
-collection.Add(new MoneyItem(Guid.NewGuid(), "Salary",      3500.00m, 1, ItemType.Income));
-collection.Add(new MoneyItem(Guid.NewGuid(), "Rent",        1200.00m, 1, ItemType.Expense));
-collection.Add(new MoneyItem(Guid.NewGuid(), "Freelance",    800.00m, 2, ItemType.Income));
-collection.Add(new MoneyItem(Guid.NewGuid(), "Groceries",    250.50m, 2, ItemType.Expense));
+var collection = new ItemCollection();
+foreach (MoneyItem item in JsonPersistence.Load(DataFile))
+    collection.Add(item);
 
 // Loop runs until the user chooses Quit (case "0" calls return)
 while (true)
@@ -22,8 +19,8 @@ while (true)
     Console.WriteLine("5. Filter");
     Console.WriteLine("6. Edit");
     Console.WriteLine("7. Remove");
-    Console.WriteLine("8. Save  (not yet available)");
-    Console.WriteLine("9. Load  (not yet available)");
+    Console.WriteLine("8. Save");
+    Console.WriteLine("9. Load");
     Console.WriteLine("0. Quit");
     Console.Write("> ");
 
@@ -60,10 +57,23 @@ while (true)
             RemoveItem(collection);
             break;
 
-        // Both 8 and 9 fall through to the same message because they share behavior
         case "8":
+            try
+            {
+                JsonPersistence.Save(collection.GetAll(), DataFile);
+                Console.WriteLine($"Saved to {DataFile}.");
+            }
+            catch (IOException ex)
+            {
+                Console.Error.WriteLine($"Save failed: {ex.Message}");
+            }
+            break;
+
         case "9":
-            Console.WriteLine("Persistence is not yet implemented.");
+            collection = new ItemCollection();
+            foreach (MoneyItem loaded in JsonPersistence.Load(DataFile))
+                collection.Add(loaded);
+            Console.WriteLine($"Loaded from {DataFile}.");
             break;
 
         // return exits the top-level program, ending the process cleanly
@@ -119,7 +129,7 @@ static SortField PromptSortField()
     while (true)
     {
         Console.WriteLine("Sort by: 1=Month  2=Amount  3=Title");
-        switch (Console.ReadLine())
+        switch (Console.ReadLine() ?? "")
         {
             case "1": return SortField.Month;
             case "2": return SortField.Amount;
@@ -135,7 +145,7 @@ static bool PromptAscending()
     while (true)
     {
         Console.WriteLine("Direction: 1=Ascending  2=Descending");
-        switch (Console.ReadLine())
+        switch (Console.ReadLine() ?? "")
         {
             case "1": return true;
             case "2": return false;
@@ -156,7 +166,7 @@ static ItemType PromptItemType()
     while (true)
     {
         Console.WriteLine("Show: 1=Income  2=Expense");
-        switch (Console.ReadLine())
+        switch (Console.ReadLine() ?? "")
         {
             case "1": return ItemType.Income;
             case "2": return ItemType.Expense;
@@ -226,14 +236,15 @@ static string PromptNonEmpty(string prompt)
     }
 }
 
-// TryParse returns false instead of throwing an exception on bad input
+// InvariantCulture ensures dot is the decimal separator regardless of the OS locale
 static decimal PromptDecimal(string prompt)
 {
     while (true)
     {
         Console.Write(prompt);
-        if (decimal.TryParse(Console.ReadLine(), out decimal value) && value > 0) return value;
-        Console.WriteLine("Enter a positive number.");
+        if (decimal.TryParse(Console.ReadLine(), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out decimal value) && value > 0) return value;
+        Console.WriteLine("Enter a positive number (use . as decimal separator).");
     }
 }
 
