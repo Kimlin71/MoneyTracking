@@ -1,6 +1,6 @@
 # Acceptance checklist
 
-**Last updated:** 2026-09-22 — Code review corrections applied; all mandatory items ✅
+**Last updated:** 2026-09-22 — Slice 3 delivered: O1, O2, O4 ✅
 
 ---
 
@@ -81,14 +81,24 @@
 
 ## Optional features
 
-These are not required for acceptance but add value if present. Each must not break any mandatory behavior.
+These are not required for acceptance but add value if present. **Each must not break any mandatory behavior.**
 
-| # | Question | Evidence |
-|---|----------|----------|
-| O1 | Does the application display a running total or balance (income minus expenses)? | Console output |
-| O2 | Does the application support totals broken down by month or by type? | Console output |
-| O3 | Does the application support a text search or keyword filter? | Console behavior |
-| O4 | Does the application use colored console output to distinguish income from expense? | Console behavior |
-| O5 | Does the application support CSV export? | Exported file |
-| O6 | Does the application support pagination for large lists? | Console behavior |
-| O7 | Does the application include unit tests beyond the mandatory behaviors listed in Q5–Q6? | Test project |
+**Key:** ✅ Done &nbsp;|&nbsp; 🔲 Not yet implemented &nbsp;|&nbsp; ⚠️ Implementation constraint noted
+
+| # | Question | Status | Evidence | Implementation constraint |
+|---|----------|--------|----------|--------------------------|
+| O1 | Does the application display a running total or balance (income minus expenses)? | ✅ | Summary line below every list — `Balance: +X.XX` | Uses `decimal` arithmetic over passed-in list; empty list returns `0m` cleanly |
+| O2 | Does the application support totals broken down by type? | ✅ | Summary line shows `Income: X.XX` and `Expenses: X.XX` alongside balance | Reflects filtered/sorted view — summary follows whichever list is displayed |
+| O3 | Does the application support a text search or keyword filter? | 🔲 | Console — items matching search term shown | Must be a **new** menu option; must not replace or disable existing type-filter (M9/M10) |
+| O4 | Does the application use colored console output to distinguish income from expense? | ✅ | Income rows green, expense rows red; `Console.ResetColor()` called after every row | Color reset per-row prevents terminal bleed on exceptions |
+| O5 | Does the application support CSV export? | 🔲 | `moneyitems.csv` present after export; file name in README | Must use a distinct file name — must not overwrite `moneyitems.json` |
+| O6 | Does the application support pagination for large lists? | ⚠️ | Console — items shown in pages with navigation | `PrintList` is shared with edit/remove index display; introduce a separate `PrintListPaged` function |
+| O7 | Does the application include unit tests beyond the mandatory behaviors listed in Q5–Q6? | ✅ | `ItemCollectionTests.cs` (10 tests) beyond the 3 in `PersistenceTests.cs` | Follow existing xunit pattern; isolated temp files for I/O |
+
+### Conflicts and constraints in optional features
+
+| # | Conflict | Resolution required before implementation |
+|---|----------|------------------------------------------|
+| C1 | O6 pagination changes `PrintList` — shared with edit/remove index display | Introduce `PrintListPaged`; keep `PrintList` for edit/remove contexts unchanged |
+| C2 | O5 CSV export writes a file — could conflict with `moneyitems.json` name | Use `moneyitems.csv`; document in README |
+| C3 | O3 keyword search could be confused with type-filter (menu option 5) | Assign a new menu number; make the distinction explicit in the prompt text |

@@ -100,9 +100,26 @@ static void PrintList(IReadOnlyList<MoneyItem> items)
     for (int i = 0; i < items.Count; i++)
     {
         MoneyItem item = items[i];
-        // i + 1 so the displayed index starts at 1, matching what users type for edit/remove
-        Console.WriteLine($"{i + 1,-4} {item.Month,-6} {item.Title,-20} {item.Amount,10:F2}  {item.Type}");
+        Console.ForegroundColor = item.Type == ItemType.Income ? ConsoleColor.Green : ConsoleColor.Red;
+        try
+        {
+            // i + 1 so the displayed index starts at 1, matching what users type for edit/remove
+            Console.WriteLine($"{i + 1,-4} {item.Month,-6} {item.Title,-20} {item.Amount,10:F2}  {item.Type}");
+        }
+        finally
+        {
+            // finally guarantees ResetColor runs even if WriteLine throws (e.g. broken pipe)
+            Console.ResetColor();
+        }
     }
+
+    // Summary uses the passed-in list so filtered/sorted views show the correct totals
+    decimal income   = items.Where(i => i.Type == ItemType.Income).Sum(i => i.Amount);
+    decimal expenses = items.Where(i => i.Type == ItemType.Expense).Sum(i => i.Amount);
+    decimal balance  = income - expenses;
+    string sign = balance >= 0 ? "+" : "";
+    Console.WriteLine(new string('-', 54));
+    Console.WriteLine($"{"Income:",-12} {income,10:F2}   {"Expenses:",-12} {expenses,10:F2}   Balance: {sign}{balance:F2}");
 }
 
 static void AddItem(ItemCollection collection, ItemType type)

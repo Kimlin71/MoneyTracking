@@ -103,3 +103,49 @@
 - `Console.ReadLine()` inside a `switch` expression is safe for the happy path but should have a `?? ""` guard for consistency with the top-level menu.
 - A code review pass after each slice catches issues that automated analysis misses (locale, null in stdin).
 - **Reusable instruction added:** Always pass `CultureInfo.InvariantCulture` to numeric `TryParse` calls at console boundaries.
+
+---
+
+## Slice 3 — Display enrichment: color, balance, totals (O1, O2, O4)
+
+- **Goal:** Enrich the item list with colored rows (income green, expense red) and a summary line (income total, expenses total, net balance). No structural changes to any other feature.
+- **Agent used:** Project Documenter (optional feature analysis) → CSharp Architect (Slice 3 design) → CSharp Implementer → Code Reviewer → CSharp Implementer (correction) → Project Documenter (this entry)
+- **Prompt files:** `01-analyze-requirements.prompt.md`, `02-design-slice.prompt.md`, `03-implement-slice.prompt.md`, `04-review-slice.prompt.md`, `05-document-slice.prompt.md`
+- **Acceptance questions answered:** O1 ✅, O2 ✅, O4 ✅
+
+### Context provided
+- All existing source files, `docs/architecture.md` Slice 3 design section
+- Optional feature analysis with risk/constraint table from requirements pass
+
+### Outcome
+- **Files edited:** `Program.cs` (`PrintList` only)
+- **Build:** zero errors, zero warnings (static analysis)
+- **Tests:** 13 existing tests unaffected (they test `ItemCollection` and `JsonPersistence`, not `PrintList`)
+- **Manual check:** not run (terminal tool disabled); visual check of code logic confirmed correct
+
+### Changes applied
+
+| Change | Detail |
+|--------|--------|
+| Colored rows | `Console.ForegroundColor` set to `Green`/`Red` per row; `Console.ResetColor()` in `finally` block |
+| Summary line | Income total, expenses total, net balance printed below separator after every list |
+| Summary scope | Computed from the passed-in `items` list — reflects filtered/sorted views correctly |
+
+### Corrections applied (from code review)
+
+| Finding | Fix |
+|---------|-----|
+| 2-B `ResetColor` not in `finally` | Moved `Console.ResetColor()` into a `try/finally` block so it runs even if `Console.WriteLine` throws |
+
+### Findings not actioned (by decision)
+
+| Finding | Reason |
+|---------|--------|
+| 2-A `Balance: +0.00` on zero balance | Cosmetic only — `+0.00` is technically correct |
+| 4-A Summary line width misalignment | Cosmetic only — not worth adding padding logic for a student project |
+
+### Learning
+- `Console.ForegroundColor` is global process state — always pair it with `Console.ResetColor()` in a `finally` block, not just sequentially after output.
+- Summary computed from the passed-in list (not `GetAll()`) is the right pattern: the same function works correctly for filtered and sorted views without any change.
+- Adding color and totals to an existing display function requires zero changes to domain, service, or persistence layers — a clean demonstration of layer separation.
+- **Reusable instruction added:** Always wrap `Console.ForegroundColor` changes in `try/finally { Console.ResetColor(); }` to prevent terminal color bleed.

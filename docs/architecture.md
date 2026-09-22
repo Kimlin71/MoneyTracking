@@ -222,3 +222,100 @@ A test project (`MoneyTracking.Tests/`) must be created if it does not already e
 - If the user runs the app from a directory without write permission, Save will throw. A friendly error message in the `catch` block in `Program.cs` mitigates this.
 
 **Recommended next agent:** CSharp Implementer — implement `JsonPersistence.cs`, update `Program.cs`, update `README.md`, create the test project and `PersistenceTests.cs`, build, and run tests to verify M17–M20, Q6, Q8.
+
+---
+
+## Slice 3 goal — Display enrichment: balance, totals, and color (O1, O2, O4)
+
+Produce visible new behavior by enriching the list display and adding a summary line. No structural changes to edit/remove/sort/filter/persistence. All changes are read-only computed values printed to the console.
+
+Acceptance questions answered by this slice: **O1, O2, O4**
+
+### Design decisions for this slice
+
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| Balance placement | Printed below the item list in `PrintList` | Always visible after listing; no extra menu option needed |
+| Totals scope | Total income, total expenses, net balance (income − expenses) | Covers both O1 and O2 in one line |
+| Totals by month | Not in this slice — deferred to a future optional slice | Keeps Slice 3 small; by-month totals require grouping logic |
+| Color trigger | Income rows green, expense rows red; reset after every row | Per-row reset is safest — no state left behind if printing stops early |
+| Color reset safety | `Console.ResetColor()` called in a `finally`-style pattern per row | Prevents terminal color bleed on exceptions |
+
+### Changes to `Program.cs` only
+
+**No new files. No new services. No domain changes.**
+
+#### 1. Colored row printing in `PrintList`
+
+Replace the plain `Console.WriteLine` for each item row with a color-wrapped version:
+
+```
+Console.ForegroundColor = item.Type == ItemType.Income
+    ? ConsoleColor.Green
+    : ConsoleColor.Red;
+// print row
+Console.ResetColor();
+```
+
+The header line, separator, and summary line remain in the default color.
+
+#### 2. Summary line below the list in `PrintList`
+
+After the item rows, print:
+
+```
+──────────────────────────────────────────────────────
+Income: 3 500,00   Expenses: 1 450,50   Balance: +2 049,50
+```
+
+Computed with LINQ over the passed-in `items` list (not `GetAll()` — so it correctly reflects sorted/filtered views):
+
+```csharp
+decimal income   = items.Where(i => i.Type == ItemType.Income).Sum(i => i.Amount);
+decimal expenses = items.Where(i => i.Type == ItemType.Expense).Sum(i => i.Amount);
+decimal balance  = income - expenses;
+string sign = balance >= 0 ? "+" : "";
+Console.WriteLine($"{"Income:",-12} {income,10:F2}   {"Expenses:",-12} {expenses,10:F2}   Balance: {sign}{balance:F2}");
+```
+
+This satisfies O1 (balance) and O2 (totals by type) in a single line that appears consistently after every list operation.
+
+#### 3. No new menu options needed
+
+Because summary appears automatically after every `PrintList` call (menu 1, 4, 5), no extra menu entry is required for O1/O2. This keeps the menu short.
+
+### Layer boundary check
+
+- `PrintList` is a static local function in `Program.cs` — it already owns all console output.
+- `ItemCollection`, `MoneyItem`, `JsonPersistence` are untouched.
+- `Console.ForegroundColor` and `Console.ResetColor()` live in `Program.cs` — correct layer.
+
+### Edit/remove index stability
+
+`PrintList` is called for display only. The 1-based index is assigned inside the loop (`i + 1`) and is always relative to whichever list is passed in. Color and summary do not affect index assignment. Edit and remove still work correctly.
+
+---
+
+## Files to create or change in Slice 3
+
+| File | Action |
+|------|--------|
+| `MoneyTracking/Program.cs` | **Edit** — color per row + summary line in `PrintList` |
+
+No other files change.
+
+---
+
+## Handoff
+
+**Summary:** Slice 3 design adds colored income/expense rows and a balance+totals summary line to `PrintList`. All changes are inside one static function in `Program.cs`. No domain, service, test, or persistence files are touched.
+
+**Files changed or proposed:** `docs/architecture.md` (this update)
+
+**Verification performed:** Design checked against O1, O2, O4 acceptance questions and constraints. Color reset per-row eliminates terminal bleed risk. Summary uses the passed-in list, so it reflects filtered/sorted views correctly. Edit/remove index logic is unaffected.
+
+**Open risks or decisions:**
+- Terminals that do not support ANSI color (rare on macOS/Windows) will show no color — not a crash, just plain output. Acceptable for a student project.
+- `Console.ForegroundColor` is a global process-level setting; if future code adds threading this could race. Not a concern for a single-threaded console app.
+
+**Recommended next agent:** CSharp Implementer — edit `PrintList` in `Program.cs` as described, build, and do a manual visual check to verify green/red rows and the summary line appear correctly.
