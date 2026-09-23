@@ -4,6 +4,8 @@ using Xunit;
 
 namespace MoneyTracking.Tests;
 
+// Each test uses a real temporary file so the JSON round-trip is tested end-to-end
+// Path.GetTempFileName() creates an empty file in the OS temp folder; finally blocks delete it
 public class PersistenceTests
 {
     [Fact]
@@ -52,6 +54,50 @@ public class PersistenceTests
             File.WriteAllText(path, "{ this is not valid json !!!");
             IReadOnlyList<MoneyItem> result = JsonPersistence.Load(path);
             Assert.Empty(result);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    // ── SEC-3: MaxDepth guard ─────────────────────────────────────────────────
+
+    [Fact]
+    public void Load_DeeplyNestedJson_ReturnsEmptyList()
+    {
+        // Build JSON that exceeds the MaxDepth = 8 limit
+        string path = Path.GetTempFileName();
+        try
+        {
+            string nested = new string('[', 20) + new string(']', 20);
+            File.WriteAllText(path, nested);
+            IReadOnlyList<MoneyItem> result = JsonPersistence.Load(path);
+            Assert.Empty(result);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    // ── SEC-4: no orphaned .tmp file ──────────────────────────────────────────
+
+    [Fact]
+    public void Save_WhenMoveSucceeds_NoTmpFileRemains()
+    {
+        string path = Path.GetTempFileName();
+        string tmp  = path + ".tmp";
+        try
+        {
+            var items = new List<MoneyItem>
+            {
+                new(Guid.NewGuid(), "Test", 1m, 1, ItemType.Income),
+            };
+
+            JsonPersistence.Save(items, path);
+
+            Assert.False(File.Exists(tmp));
         }
         finally
         {

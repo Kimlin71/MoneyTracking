@@ -1,6 +1,6 @@
 # Acceptance checklist
 
-**Last updated:** 2026-09-23 — Slice 5: month sub-filter added to Filter (option 5)
+**Last updated:** 2026-09-23 — SEC-1 fix: data file moved to user-specific LocalApplicationData directory
 
 ---
 
@@ -10,7 +10,7 @@
 |---|-------|-----------|
 | A1 | Month representation | Plain `int` (1–12), validated in `PromptMonth()` before `MoneyItem` is constructed |
 | A2 | Save trigger | Save on quit — option `0` saves then exits; auto-load on startup |
-| A3 | File format and location | `moneyitems.json` in working directory, JSON via `System.Text.Json`; documented in README |
+| A3 | File format and location | `moneyitems.json` in `LocalApplicationData/MoneyTracking/` (macOS: `~/Library/Application Support/MoneyTracking/`), JSON via `System.Text.Json`; permissions `600` on macOS/Linux; documented in README |
 | A4 | Editable fields | Three fields (title, amount, month); pressing Enter keeps the current value. Type is not editable after creation — decision: type is set at add time and stable. |
 | A5 | Item selection | 1-based display index shown in list; backed by stable `Guid Id` for the actual operation |
 | A6 | Income/expense model | `ItemType` enum (`Income` / `Expense`) in `Domain/ItemType.cs` |
@@ -57,7 +57,7 @@
 
 | # | Question | Status | Evidence |
 |---|----------|--------|----------|
-| M17 | Is the item list saved to a file (format and location documented in README)? | ✅ | `JsonPersistence.Save()` — triggered by option `0` (Save and Quit); README Data file section |
+| M17 | Is the item list saved to a file (format and location documented in README)? | ✅ | `JsonPersistence.Save()` — triggered by option `0` (Save and Quit); README Data file section lists per-OS paths and `600` permissions |
 | M18 | Is the saved state restored when the application is restarted? | ✅ | Auto-load via `JsonPersistence.Load()` at startup in `Program.cs` |
 | M19 | Does the application handle a missing data file without crashing? | ✅ | `Load()` returns `[]` when `!File.Exists(path)`; unit test `Load_MissingFile_ReturnsEmptyList` |
 | M20 | Does the application handle a malformed data file explicitly? | ✅ | `Load()` catches `JsonException`, writes to `Console.Error`, returns `[]`; unit test `Load_MalformedJson_ReturnsEmptyList` |
@@ -91,9 +91,9 @@ These are not required for acceptance but add value if present. **Each must not 
 | O2 | Does the application support totals broken down by type? | ✅ | Summary line shows `Income: X.XX` and `Expenses: X.XX` alongside balance | Reflects filtered/sorted view — summary follows whichever list is displayed |
 | O3 | Does the application support a text search or keyword filter? | ✅ | Menu option 7 — `SearchItems` prompts for a keyword, calls `ItemCollection.GetByKeyword` (case-insensitive substring on Title), displays via `PrintList` | Does not replace type-filter (option 5); distinct menu slot |
 | O4 | Does the application use colored console output to distinguish income from expense? | ✅ | Income rows green, expense rows red; `Console.ResetColor()` called after every row | Color reset per-row prevents terminal bleed on exceptions |
-| O5 | Does the application support CSV export? | ✅ | Menu option 8 — prompts for a file path, calls `CsvExport.Export`; columns: `Id,Title,Amount,Month,Type`; amount uses invariant culture `F2`; titles containing commas or quotes are properly escaped | `Services/CsvExport.cs`; three unit tests in `CsvExportTests.cs` |
+| O5 | Does the application support CSV export? | ✅ | Menu option 8 — prompts for a file path, calls `CsvExport.Export`; columns: `Id,Title,Amount,Month,Type`; amount uses invariant culture `F2`; titles containing commas or quotes are properly escaped; path-traversal guard rejects paths outside working directory | `Services/CsvExport.cs`; 8 unit tests in `CsvExportTests.cs` (4 export format + 4 `IsPathSafe`) |
 | O6 | Does the application support pagination for large lists? | ⚠️ | Console — items shown in pages with navigation | `PrintList` is shared with edit/remove index display; introduce a separate `PrintListPaged` function |
-| O7 | Does the application include unit tests beyond the mandatory behaviors listed in Q5–Q6? | ✅ | `ItemCollectionTests.cs` (10 tests) beyond the 3 in `PersistenceTests.cs` | Follow existing xunit pattern; isolated temp files for I/O |
+| O7 | Does the application include unit tests beyond the mandatory behaviors listed in Q5–Q6? | ✅ | 47 tests total: `ItemCollectionTests` (17), `CsvExportTests` (8), `KeywordSearchTests` (8), `DecimalParsingTests` (9), `PersistenceTests` (5) — all pass (verified 2026-09-23) | Follow existing xunit pattern; isolated temp files for I/O |
 
 ### Conflicts and constraints in optional features
 

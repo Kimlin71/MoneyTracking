@@ -1,9 +1,9 @@
 # 💰 Money Tracking
 
-> A C# (.NET 10) console application for tracking personal income and expenses — with color output, keyword search, JSON persistence, and 30 unit tests.
+> A C# (.NET 10) console application for tracking personal income and expenses — with color output, keyword search, CSV export, JSON persistence, and 47 unit tests.
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-30%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)
 ![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
@@ -50,6 +50,7 @@ Money Tracking is a command-line application that lets you record, view, sort, f
 | Sort | By month, amount, or title — ascending or descending |
 | Filter | Show only income or only expenses, with optional month restriction |
 | Search | Case-insensitive substring match on title |
+| Export | Write all items to a CSV file; path must be inside the current directory |
 | Save | Atomic write to `moneyitems.json` (temp file + move, no data corruption) |
 | Discard | Reload last saved state with confirmation prompt |
 
@@ -71,9 +72,10 @@ Pick an option:
 2. Add New Expense / Income
 3. Edit Item (edit, remove)
 4. Sort items by month, amount, or title
-5. Filter to show only income or only expenses
+5. Filter by type and optional month
 6. Search by title keyword
 7. Discard unsaved changes
+8. Export to CSV
 0. Save and Quit
 >>
 ```
@@ -129,10 +131,10 @@ The app loads `moneyitems.json` from the working directory. Ten sample items are
 ### 4. Run tests
 
 ```bash
-dotnet test MoneyTracking.Tests/MoneyTracking.Tests.csproj
+dotnet test
 ```
 
-Expected: **30 passed, 0 failed** (last verified 2026-09-22).
+Expected: **47 passed, 0 failed** (verified 2026-09-23 by `dotnet test`).
 
 ---
 
@@ -190,13 +192,15 @@ MoneyTracking/
 │   ├── MoneyItem.cs         # immutable record: Id, Title, Amount, Month, Type
 │   └── SortField.cs         # enum Month | Amount | Title
 ├── Services/
+│   ├── CsvExport.cs         # Export to CSV; IsPathSafe path-traversal guard
 │   ├── ItemCollection.cs    # Add, Remove, Replace, GetAll, GetSorted, GetFiltered, GetByKeyword
-│   └── JsonPersistence.cs   # Save (atomic), Load (safe on missing/malformed file)
+│   └── JsonPersistence.cs   # Save (atomic + tmp cleanup), Load (MaxDepth 8, safe on missing/malformed)
 ├── MoneyTracking.Tests/
-│   ├── ItemCollectionTests.cs   # sort and filter — 10 tests
-│   ├── PersistenceTests.cs      # round-trip, missing file, malformed JSON — 3 tests
+│   ├── CsvExportTests.cs        # export format + IsPathSafe — 8 tests
+│   ├── DecimalParsingTests.cs   # comma/dot separator — 9 tests
+│   ├── ItemCollectionTests.cs   # sort and filter — 17 tests
 │   ├── KeywordSearchTests.cs    # GetByKeyword — 8 tests
-│   └── DecimalParsingTests.cs   # comma/dot separator — 9 tests
+│   └── PersistenceTests.cs      # round-trip, missing file, malformed JSON, MaxDepth, tmp cleanup — 5 tests
 ├── Program.cs               # menu loop, console interaction, sub-menus
 ├── moneyitems.json          # persisted data (auto-loaded; auto-created on Save and Quit)
 ├── MoneyTracking.csproj
@@ -240,16 +244,17 @@ No class in `Domain/` or `Services/` references `System.Console` or `System.IO` 
 Tests use **xUnit** and run against the domain and service layers only (no console or file I/O mocking needed in most cases).
 
 ```bash
-dotnet test MoneyTracking.Tests/MoneyTracking.Tests.csproj --logger "console;verbosity=normal"
+dotnet test --logger "console;verbosity=normal"
 ```
 
 | Test class | Count | What it covers |
 |------------|-------|----------------|
-| `ItemCollectionTests` | 10 | Sort (3 fields × 2 directions + mutation guard), filter (income, expense, empty) |
-| `PersistenceTests` | 3 | Save/load round-trip, missing file → empty list, malformed JSON → empty list |
-| `KeywordSearchTests` | 8 | Exact, case-insensitive, partial, no match, multiple matches, empty collection |
+| `CsvExportTests` | 8 | Header + data row, empty list, comma/quote escaping, path-traversal guard (4 cases) |
 | `DecimalParsingTests` | 9 | Dot, comma, whole number, Swedish locale, zero, negative, empty, non-numeric |
-| **Total** | **30** | **All pass ✅** |
+| `ItemCollectionTests` | 17 | Sort (3 fields × 2 directions + mutation guard), filter (income, expense, type+month) |
+| `KeywordSearchTests` | 8 | Exact, case-insensitive, partial, no match, multiple matches, empty collection |
+| `PersistenceTests` | 5 | Save/load round-trip, missing file, malformed JSON, deeply-nested JSON (MaxDepth), no orphaned tmp |
+| **Total** | **47** | **All pass ✅ (verified 2026-09-23)** |
 
 ---
 
@@ -258,13 +263,18 @@ dotnet test MoneyTracking.Tests/MoneyTracking.Tests.csproj --logger "console;ver
 | Property | Value |
 |----------|-------|
 | File name | `moneyitems.json` |
-| Location | Working directory (`dotnet run` runs from the project folder) |
+| Location (macOS) | `~/Library/Application Support/MoneyTracking/moneyitems.json` |
+| Location (Linux) | `~/.local/share/MoneyTracking/moneyitems.json` |
+| Location (Windows) | `%LOCALAPPDATA%\MoneyTracking\moneyitems.json` |
+| Permissions | `600` (owner read+write only) on macOS/Linux — set after every save |
 | Format | JSON array — one `MoneyItem` object per element |
 | Created by | Menu option **0. Save and Quit** |
 | Missing file | App starts with an empty list — not an error |
 | Malformed file | Error message printed to stderr; app starts with an empty list |
 
-**Atomic write:** the file is written to a `.tmp` file first, then moved into place — a crash mid-write never leaves a corrupt file.
+**Atomic write:** the file is written to a `.tmp` file first, then moved into place — a crash mid-write never leaves a corrupt file. If the move fails, the `.tmp` file is deleted before the error is surfaced.
+
+**CSV export path guard:** the export path is resolved to an absolute path and rejected if it falls outside the current working directory, preventing path-traversal overwrites.
 
 ---
 
@@ -283,9 +293,9 @@ dotnet test MoneyTracking.Tests/MoneyTracking.Tests.csproj --logger "console;ver
 
 | Status | Feature |
 |--------|---------|
-| ✅ Done | Core CRUD, sort, filter, search, persistence, color UI |
-| 🔲 Planned | Totals grouped by month (O2 extended) |
-| 🔲 Planned | CSV export |
+| ✅ Done | Core CRUD, sort, filter by type + month, search, JSON persistence, color UI |
+| ✅ Done | CSV export with path-traversal guard |
+| ✅ Done | Security hardening: user-specific data dir (600 perms), MaxDepth guard, atomic tmp cleanup, path guard |
 | ⚠️ Constrained | Pagination (requires separate display function to preserve edit/remove indexes) |
 
 ---

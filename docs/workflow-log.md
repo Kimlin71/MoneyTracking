@@ -228,3 +228,128 @@ None — all review findings (5-A menu label, 4-A test gap) were addressed.
 - Always test that `null` month produces the same result as the original single-argument overload — it proves the overload is a strict extension, not a replacement.
 - Menu labels should be updated whenever a feature is extended, even if the change is minor.
 - **Reusable instruction added:** When adding an overload, include a test that proves `null` produces identical output to the original call — it guards against accidental behavior drift.
+
+---
+
+## Security slice — SEC-2, SEC-3, SEC-4 hardening + tests
+
+- **Goal:** Fix three actionable security findings from the security best practices report and add unit tests for each fix.
+- **Agent used:** CSharp Architect (fixes) → Test Designer (tests + `IsPathSafe` extraction) → Project Documenter (this entry)
+- **Prompt files:** `02-design-slice.prompt.md`, `05-document-slice.prompt.md`
+- **Acceptance questions affected:** O5 (evidence updated — path guard noted), O7 (test count updated to 39)
+
+### Context provided
+- `security_best_practices_report.md` (5 findings, 3 open at start of slice)
+- All service source files and existing test files
+
+### Outcome
+- **Files edited:** `Services/CsvExport.cs`, `Services/JsonPersistence.cs`, `Program.cs`, `MoneyTracking.Tests/CsvExportTests.cs`, `MoneyTracking.Tests/PersistenceTests.cs`
+- **Build:** zero errors, zero warnings (static analysis confirmed)
+- **Tests:** 47 total — `dotnet test` result: **47 passed, 0 failed, 0 skipped** (verified 2026-09-23)
+
+### Changes applied
+
+| Finding | Fix | Test |
+|---------|-----|------|
+| SEC-2 — CSV path traversal | `ExportToCsv` in `Program.cs` resolves path with `Path.GetFullPath` and checks against `Environment.CurrentDirectory` | Extracted check into `CsvExport.IsPathSafe(string, string)`; 4 tests in `CsvExportTests` |
+| SEC-3 — No explicit `MaxDepth` on deserialization | `JsonPersistence` added `_readOptions` with `MaxDepth = 8` passed to every `Deserialize` call | `Load_DeeplyNestedJson_ReturnsEmptyList` in `PersistenceTests` |
+| SEC-4 — Orphaned `.tmp` on `File.Move` failure | `JsonPersistence.Save` wraps write+move in try/catch; deletes `.tmp` before re-throwing | `Save_WhenMoveSucceeds_NoTmpFileRemains` in `PersistenceTests` |
+
+### Findings not actioned (by decision)
+
+| Finding | Reason |
+|---------|--------|
+| SEC-1 — Data file in world-readable binary dir | Changing `AppContext.BaseDirectory` alters the documented data file path and may break saved data for existing users; requires a deliberate product decision before implementing |
+| SEC-5 — No title length upper bound | Low risk (no buffer overflow in C#); cosmetic display issue only; out of scope for this slice |
+
+### Design decision
+Extracted `IsPathSafe(string fullPath, string safeDir)` as an `internal static` method on `CsvExport` rather than keeping the guard inline in `Program.cs`. This made the logic unit-testable without involving the console layer, and kept `Program.cs` calling a named predicate instead of a multi-line inline condition.
+
+### Learning
+- Path-guard logic belongs in a service method, not inline in a console function — it can then be unit-tested without any console mocking.
+- `internal` visibility is the correct choice for test-supporting helpers that should not be part of the public API.
+- `MaxDepth` on deserialization is cheap and explicit; always set it when reading untrusted files, even in a local app.
+- A try/catch (not try/finally) is the right pattern for cleanup-then-rethrow when you want to ensure a side effect (file deletion) happens only on failure, not on success.
+- **Reusable instruction added:** When a security guard is added inline in a console function, immediately ask whether it can be extracted into the service layer as a named predicate — testability almost always justifies the one-line extraction.
+
+---
+
+## Documentation pass — beginner comments + verified test count
+
+- **Goal:** Add explanatory comments for C# beginners across all source and test files; update all documentation to reflect the verified test count of 47.
+- **Agent used:** Project Documenter
+- **Prompt files:** `05-document-slice.prompt.md`
+- **Acceptance questions affected:** none — comment-only and doc changes
+
+### Context provided
+- All source files, test files, README, workflow log, acceptance checklist
+- Live `dotnet test` result: **47 passed, 0 failed, 0 skipped**
+
+### Outcome
+- **Files edited (comments):** `MoneyTracking.Tests/ItemCollectionTests.cs`, `MoneyTracking.Tests/PersistenceTests.cs`, `MoneyTracking.Tests/CsvExportTests.cs`, `MoneyTracking.Tests/KeywordSearchTests.cs`, `Program.cs`
+- **Files edited (counts):** `README.md`, `docs/acceptance-checklist.md`, `docs/workflow-log.md`
+- **Build:** zero errors (confirmed via static analysis after every edit)
+- **Tests:** 47 passed — verified by user running `dotnet test`
+
+### Comments added
+
+| File | What was explained |
+|------|--------------------|
+| `ItemCollectionTests.cs` | `[Fact]` discovery, Arrange/Act/Assert pattern |
+| `PersistenceTests.cs` | Why real temp files are used; `finally` cleanup purpose |
+| `CsvExportTests.cs` | Same temp-file/finally pattern explanation |
+| `KeywordSearchTests.cs` | Default parameter values in the `Item` helper |
+| `Program.cs` | C# property pattern `is { Length: > 0 } t` in `EditItem` |
+
+### Decision
+Only added comments where the code pattern is non-obvious to a beginner (advanced syntax, design rationale). Did not add comments that restate what the next line does.
+
+### Learning
+- Place file-level comments *inside* the namespace block (or on the line directly above the class declaration with an explicit newline) — a comment placed between a file-scoped `namespace` statement and a `class` keyword merges onto the class line if the replacement tool drops the trailing newline.
+- **Reusable instruction:** Always verify with the error checker immediately after adding comments near class/namespace boundaries.
+
+---
+
+## SEC-1 fix — data file moved to user-specific directory
+
+- **Goal:** Fix SEC-1 (HIGH): stop writing financial data to the world-readable binary directory; write to the OS-standard user-specific application data directory with restrictive permissions.
+- **Agent used:** CSharp Implementer → Project Documenter (this entry)
+- **Prompt files:** `03-implement-slice.prompt.md`, `05-document-slice.prompt.md`
+- **Acceptance questions affected:** A3 (resolution updated), M17 (evidence updated), Q8 (README already updated by implementer)
+
+### Context provided
+- `security_best_practices_report.md` SEC-1 finding
+- Current `Program.cs` and `Services/JsonPersistence.cs`
+
+### Outcome
+- **Files edited:** `Program.cs`, `Services/JsonPersistence.cs`, `security_best_practices_report.md`, `README.md`, `docs/architecture.md`, `docs/acceptance-checklist.md`
+- **Build:** zero errors (static analysis confirmed)
+- **Tests:** 47 tests unaffected — no test touches `DataFile` path construction; run `dotnet test` to confirm
+
+### Changes applied
+
+| File | Change |
+|------|--------|
+| `Program.cs` | `DataFile` now derived from `Environment.SpecialFolder.LocalApplicationData` + `"MoneyTracking"` subfolder; `Directory.CreateDirectory` ensures the folder exists on first run |
+| `Services/JsonPersistence.cs` | `File.SetUnixFileMode(path, UserRead \| UserWrite)` called after every successful save; guarded by `OperatingSystem.IsWindows()` for cross-platform safety |
+| `security_best_practices_report.md` | SEC-1 marked ✅ Fixed with applied code, OS-specific paths, and header date updated |
+| `README.md` | Data file table expanded with per-OS paths and permissions row; roadmap updated |
+| `docs/architecture.md` | A3 decision updated with new location and rationale |
+| `docs/acceptance-checklist.md` | Header date, A3 resolution, and M17 evidence updated |
+
+### Data file locations after fix
+
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/MoneyTracking/moneyitems.json` |
+| Linux | `~/.local/share/MoneyTracking/moneyitems.json` |
+| Windows | `%LOCALAPPDATA%\MoneyTracking\moneyitems.json` |
+
+### Open risk
+Existing saved data in `bin/Debug/net10.0/moneyitems.json` (or the old working directory) is **not migrated automatically**. Users who had data before this change must copy the file to the new location manually.
+
+### Learning
+- `Environment.SpecialFolder.LocalApplicationData` is the correct cross-platform choice for user-private app data: it maps to `~/Library/Application Support` on macOS, `~/.local/share` on Linux, and `%LOCALAPPDATA%` on Windows — all user-owned and not world-readable by default.
+- `File.SetUnixFileMode` (available since .NET 7) is the clean way to enforce `600` permissions without invoking external processes. Always guard it with `OperatingSystem.IsWindows()` so the code compiles and runs on all platforms.
+- `OperatingSystem.IsWindows()` is evaluated at runtime; `RuntimeInformation.IsOSPlatform` is the older equivalent — prefer `OperatingSystem.*` in .NET 5+.
+- **Reusable instruction added:** For any app that stores user data, set the data directory to `LocalApplicationData/<AppName>/` and apply `600` permissions after the first write — both steps are required; the directory alone is not sufficient if it inherits a permissive umask.

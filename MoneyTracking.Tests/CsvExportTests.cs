@@ -4,6 +4,7 @@ using Xunit;
 
 namespace MoneyTracking.Tests;
 
+// Each export test writes to a real temp file and reads it back; finally blocks clean up the file
 public class CsvExportTests
 {
     [Fact]
@@ -92,5 +93,39 @@ public class CsvExportTests
         {
             File.Delete(path);
         }
+    }
+
+    // ── IsPathSafe (SEC-2 path traversal guard) ──────────────────────────────
+
+    [Fact]
+    public void IsPathSafe_PathInsideBaseDir_ReturnsTrue()
+    {
+        string baseDir = Path.GetTempPath().TrimEnd(Path.DirectorySeparatorChar);
+        string fullPath = Path.Combine(baseDir, "export.csv");
+        Assert.True(CsvExport.IsPathSafe(fullPath, baseDir));
+    }
+
+    [Fact]
+    public void IsPathSafe_PathTraversal_ReturnsFalse()
+    {
+        string baseDir = Path.Combine(Path.GetTempPath(), "safe");
+        // Resolve a traversal attempt one level above the safe dir
+        string fullPath = Path.GetFullPath(Path.Combine(baseDir, "..", "outside.csv"));
+        Assert.False(CsvExport.IsPathSafe(fullPath, baseDir));
+    }
+
+    [Fact]
+    public void IsPathSafe_ExactlyBaseDir_ReturnsTrue()
+    {
+        string baseDir = Path.GetTempPath().TrimEnd(Path.DirectorySeparatorChar);
+        Assert.True(CsvExport.IsPathSafe(baseDir, baseDir));
+    }
+
+    [Fact]
+    public void IsPathSafe_AbsolutePathOutsideDir_ReturnsFalse()
+    {
+        string baseDir = Path.Combine(Path.GetTempPath(), "project");
+        string fullPath = Path.Combine(Path.GetTempPath(), "other", "file.csv");
+        Assert.False(CsvExport.IsPathSafe(fullPath, baseDir));
     }
 }

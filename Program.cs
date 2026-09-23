@@ -1,8 +1,10 @@
 ﻿using MoneyTracking.Domain;
 using MoneyTracking.Services;
 
-// AppContext.BaseDirectory points to the folder containing the executable — reliable regardless of working directory
-string DataFile = Path.Combine(AppContext.BaseDirectory, "moneyitems.json");
+// LocalApplicationData is user-specific and not world-readable (e.g. ~/Library/Application Support on macOS)
+string DataDir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoneyTracking");
+Directory.CreateDirectory(DataDir);
+string DataFile = Path.Combine(DataDir, "moneyitems.json");
 
 var collection = new ItemCollection();
 foreach (MoneyItem item in JsonPersistence.Load(DataFile))
@@ -149,11 +151,21 @@ static void EditOrRemove(ItemCollection collection)
 static void ExportToCsv(ItemCollection collection)
 {
     string path = PromptNonEmpty("Export file path (e.g. export.csv): ");
+
+    // Resolve to absolute path and reject traversal outside the current directory
+    string fullPath = Path.GetFullPath(path);
+    string safeDir  = Path.GetFullPath(Environment.CurrentDirectory);
+    if (!CsvExport.IsPathSafe(fullPath, safeDir))
+    {
+        Console.Error.WriteLine("Export path must be inside the current directory.");
+        return;
+    }
+
     try
     {
         IReadOnlyList<MoneyItem> items = collection.GetAll();
-        CsvExport.Export(items, path);
-        Console.WriteLine($"Exported {items.Count} item(s) to {path}");
+        CsvExport.Export(items, fullPath);
+        Console.WriteLine($"Exported {items.Count} item(s) to {fullPath}");
     }
     catch (IOException ex)
     {
@@ -301,7 +313,7 @@ static void EditItem(ItemCollection collection)
     MoneyItem existing = all[index - 1];
 
     Console.Write($"Title [{existing.Title}]: ");
-    // Keep the existing value if the user just presses Enter (empty input)
+    // 'is { Length: > 0 } t' is a property pattern: matches when Length > 0 and binds the value to t
     string title = Console.ReadLine() is { Length: > 0 } t ? t : existing.Title;
 
     Console.Write($"Amount [{existing.Amount:F2}]: ");

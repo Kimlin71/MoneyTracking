@@ -1,6 +1,6 @@
 # Security Best Practices Report — MoneyTracking
 
-**Date:** 2026-09-23  
+**Date:** 2026-09-23 (updated 2026-09-23 — SEC-1, SEC-2, SEC-3, SEC-4 fixed)  
 **Language:** C# (.NET 10, console application)  
 **Scope:** All source files in the workspace
 
@@ -16,38 +16,39 @@ This is a local-only C# console application with no network exposure, no authent
 
 ### HIGH
 
-#### SEC-1 — Data file written to the application binary directory (world-readable on multi-user systems)
+#### SEC-1 — Data file written to the application binary directory (world-readable on multi-user systems) ✅ FIXED
 
 **Impact:** Any local user can read or tamper with the saved financial data.
 
 **Location:** [Program.cs](Program.cs#L5)
 
+**Fix applied in `Program.cs`:** Data file is now written to `LocalApplicationData/MoneyTracking/moneyitems.json` — a directory owned exclusively by the current user. After each save, `File.SetUnixFileMode` sets permissions to `600` (owner read+write only) on macOS and Linux. The call is guarded by `OperatingSystem.IsWindows()` so it compiles and runs on all platforms.
+
 ```csharp
-string DataFile = Path.Combine(AppContext.BaseDirectory, "moneyitems.json");
+string DataDir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoneyTracking");
+Directory.CreateDirectory(DataDir);
+string DataFile = Path.Combine(DataDir, "moneyitems.json");
+// ...
+if (!OperatingSystem.IsWindows())
+    File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 ```
 
-`AppContext.BaseDirectory` resolves to the directory that contains the compiled executable (e.g. `bin/Debug/net10.0/`). On macOS and Linux, that directory is often world-readable (`755`). Storing personal financial data there means any other local account can read the file without further privileges.
-
-**Recommendation:** Write the data file to a user-specific directory (e.g. `Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)`) and set restrictive permissions (`600`) on the file after writing.
+**Data file locations by OS:**
+- macOS: `~/Library/Application Support/MoneyTracking/moneyitems.json`
+- Linux: `~/.local/share/MoneyTracking/moneyitems.json`
+- Windows: `%LOCALAPPDATA%\MoneyTracking\moneyitems.json`
 
 ---
 
-#### SEC-2 — CSV export path is accepted without any sanitisation or boundary check
+#### SEC-2 — CSV export path is accepted without any sanitisation or boundary check ✅ FIXED
 
 **Impact:** A crafted path (e.g. `../../.ssh/authorized_keys`) can overwrite arbitrary files the process owner can write to.
 
 **Location:** [Program.cs](Program.cs#L153) and [Services/CsvExport.cs](Services/CsvExport.cs#L9)
 
-```csharp
-// Program.cs ~line 153
-string path = PromptNonEmpty("Export file path (e.g. export.csv): ");
-// ...
-CsvExport.Export(items, path);
-```
+**Fix applied in `Program.cs` `ExportToCsv()`:** `Path.GetFullPath` resolves the user-supplied path, then a `StartsWith` check against `Environment.CurrentDirectory` rejects any path outside the working directory before the file is opened. The guard logic is extracted into `CsvExport.IsPathSafe(string, string)` so it can be unit-tested independently of the console.
 
-`PromptNonEmpty` only checks that the string is non-empty. No validation is done to keep the output inside a safe directory. An attacker who can interact with the console (or replay a script) can supply a path traversal string.
-
-**Recommendation:** Resolve the path with `Path.GetFullPath` and verify it stays within an expected base directory, or at minimum confirm with the user before writing to an absolute path outside the current directory. Example guard:
+**Tests added in `MoneyTracking.Tests/CsvExportTests.cs`:** `IsPathSafe_PathInsideBaseDir_ReturnsTrue`, `IsPathSafe_PathTraversal_ReturnsFalse`, `IsPathSafe_ExactlyBaseDir_ReturnsTrue`, `IsPathSafe_AbsolutePathOutsideDir_ReturnsFalse`.
 
 ```csharp
 string fullPath = Path.GetFullPath(path);
@@ -64,25 +65,18 @@ if (!fullPath.StartsWith(safeDir + Path.DirectorySeparatorChar, StringComparison
 
 ### MEDIUM
 
-#### SEC-3 — `JsonSerializer.Deserialize` runs without a `JsonSerializerOptions` max-depth guard
+#### SEC-3 — `JsonSerializer.Deserialize` runs without a `JsonSerializerOptions` max-depth guard ✅ FIXED
 
 **Impact:** A maliciously crafted or accidentally deeply-nested JSON file can cause a stack overflow, crashing the process.
 
 **Location:** [Services/JsonPersistence.cs](Services/JsonPersistence.cs#L34)
 
-```csharp
-return JsonSerializer.Deserialize<List<MoneyItem>>(json) ?? [];
-```
+**Fix applied in `Services/JsonPersistence.cs`:** A dedicated `_readOptions` with `MaxDepth = 8` is now passed to every `Deserialize` call. `MoneyItem` is a flat record; 8 levels is more than sufficient and tighter than the library default of 64.
 
-The default `System.Text.Json` `MaxDepth` is 64, which is fine for normal use. However, the deserialization happens with no explicit options, so it silently inherits the library default. If the default were ever changed (e.g. by a future .NET version), or if someone crafted a deeply-nested file, there is no explicit guard.
-
-**Recommendation:** Pass explicit `JsonSerializerOptions` with a reasonable `MaxDepth`:
+**Test added in `MoneyTracking.Tests/PersistenceTests.cs`:** `Load_DeeplyNestedJson_ReturnsEmptyList` — writes a 20-level nested JSON array to a temp file and asserts the result is an empty list (no crash).
 
 ```csharp
-private static readonly JsonSerializerOptions _readOptions = new()
-{
-    MaxDepth = 8  // MoneyItem has no nesting; 8 is more than sufficient
-};
+private static readonly JsonSerializerOptions _readOptions = new() { MaxDepth = 8 };
 // ...
 return JsonSerializer.Deserialize<List<MoneyItem>>(json, _readOptions) ?? [];
 ```
@@ -91,20 +85,13 @@ return JsonSerializer.Deserialize<List<MoneyItem>>(json, _readOptions) ?? [];
 
 ### LOW / INFORMATIONAL
 
-#### SEC-4 — Temporary file left on disk if `File.Move` throws
+#### SEC-4 — Temporary file left on disk if `File.Move` throws ✅ FIXED
 
 **Location:** [Services/JsonPersistence.cs](Services/JsonPersistence.cs#L17-L21)
 
-```csharp
-string tmp = path + ".tmp";
-string json = JsonSerializer.Serialize(items, _options);
-File.WriteAllText(tmp, json);
-File.Move(tmp, path, overwrite: true);
-```
+**Fix applied in `Services/JsonPersistence.cs` `Save()`:** The write and move are now wrapped in a try/catch that deletes the `.tmp` file before re-throwing, so no orphaned file containing financial data is ever left behind.
 
-If `File.Move` throws (e.g. cross-device move, permissions error), the `.tmp` file containing the full data set is left on disk undeleted. This is not a data-loss risk (the move throwing means the old file is still intact), but the orphaned `.tmp` file contains sensitive financial data.
-
-**Recommendation:** Wrap in a try/finally to clean up:
+**Test added in `MoneyTracking.Tests/PersistenceTests.cs`:** `Save_WhenMoveSucceeds_NoTmpFileRemains` — asserts the `.tmp` file is absent after a successful save.
 
 ```csharp
 string tmp = path + ".tmp";
@@ -140,13 +127,13 @@ if (value.Length > 100)
 
 ## Summary Table
 
-| ID    | Severity    | Finding                                         |
-|-------|-------------|-------------------------------------------------|
-| SEC-1 | HIGH        | Data file written to world-readable binary dir  |
-| SEC-2 | HIGH        | CSV export path allows path traversal           |
-| SEC-3 | MEDIUM      | JSON deserialisation has no explicit MaxDepth   |
-| SEC-4 | LOW         | Orphaned `.tmp` file on failed atomic save      |
-| SEC-5 | LOW         | No upper bound on title length                  |
+| ID    | Severity    | Finding                                         | Status         |
+|-------|-------------|--------------------------------------------------|----------------|
+| SEC-1 | HIGH        | Data file written to world-readable binary dir  | ✅ Fixed       |
+| SEC-2 | HIGH        | CSV export path allows path traversal           | ✅ Fixed + tested |
+| SEC-3 | MEDIUM      | JSON deserialisation has no explicit MaxDepth   | ✅ Fixed + tested |
+| SEC-4 | LOW         | Orphaned `.tmp` file on failed atomic save      | ✅ Fixed + tested |
+| SEC-5 | LOW         | No upper bound on title length                  | Open           |
 
 ---
 

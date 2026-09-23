@@ -10,7 +10,7 @@
 |---|----------|-----------|
 | A1 | Month is a plain `int` (1–12) validated at the boundary; no custom type. | Simplest option that rejects invalid values without extra ceremony for a mini project. |
 | A2 | Save is triggered explicitly by a menu option ("Save"). | Keeps persistence visible and avoids accidental overwrites during a demo. |
-| A3 | JSON file (`moneyitems.json`) in the application's working directory, written with `System.Text.Json`. | JSON is human-readable, round-trips cleanly, and requires no extra packages on .NET 10. |
+| A3 | JSON file (`moneyitems.json`) in `Environment.SpecialFolder.LocalApplicationData/MoneyTracking/`, written with `System.Text.Json`; permissions set to `600` on macOS/Linux after each write. | User-specific directory is not world-readable, satisfying SEC-1. `LocalApplicationData` resolves correctly on macOS, Linux, and Windows without extra packages. |
 | A4 | All four fields (title, amount, month, type) are re-prompted on edit; pressing Enter keeps the current value. | Consistent and easy to demo without complex partial-update logic. |
 | A5 | Items are selected for edit/remove by the 1-based display index shown in the list. | No stable ID needed for a mini project; index is always visible and unambiguous while the list is on screen. |
 | A6 | `ItemType` enum with values `Income` and `Expense`. | Enum is explicit, requires no polymorphism, and satisfies the domain model rule from copilot-instructions.md. |
@@ -219,7 +219,11 @@ Field rules:
 - The data file is `moneyitems.json` in the application's working directory (documented in README, satisfies M17).
 - `MoneyItem` is a record; the serializer handles it automatically via its constructor.
 
-**Atomic write strategy:** Write to a temp file in the same directory, then `File.Move` with `overwrite: true`. This prevents a half-written file if the process is killed mid-save.
+**Atomic write strategy:** Write to a temp file in the same directory, then `File.Move` with `overwrite: true`. This prevents a half-written file if the process is killed mid-save. The write+move is wrapped in a try/catch that deletes the `.tmp` file before re-throwing, so no orphaned file is left on disk (SEC-4).
+
+**Read options:** Deserialization uses a dedicated `_readOptions` instance with `MaxDepth = 8`. `MoneyItem` is flat; the lower bound prevents crafted files from triggering deep-recursion crashes (SEC-3).
+
+**CSV export path guard:** `ExportToCsv` in `Program.cs` resolves the user path with `Path.GetFullPath` and rejects paths outside `Environment.CurrentDirectory` before opening any file (SEC-2).
 
 ### Changes to `Program.cs`
 

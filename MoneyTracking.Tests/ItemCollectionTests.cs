@@ -4,6 +4,8 @@ using Xunit;
 
 namespace MoneyTracking.Tests;
 
+// Each method marked [Fact] is one independent test; xUnit discovers and runs them automatically
+// Pattern: Arrange (set up data) → Act (call the method) → Assert (check the result)
 public class ItemCollectionTests
 {
     // Helper so each test can build items without repeating the full constructor

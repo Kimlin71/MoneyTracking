@@ -102,3 +102,4 @@
 /Users/kim/GitRepos/MoneyTracking/MoneyTracking.Tests/obj/Debug/net10.0/MoneyTracking.Tests.pdb
 /Users/kim/GitRepos/MoneyTracking/MoneyTracking.Tests/obj/Debug/net10.0/MoneyTracking.Tests.genruntimeconfig.cache
 /Users/kim/GitRepos/MoneyTracking/MoneyTracking.Tests/obj/Debug/net10.0/ref/MoneyTracking.Tests.dll
+/Users/kim/GitRepos/MoneyTracking/MoneyTracking.Tests/bin/Debug/net10.0/moneyitems.json

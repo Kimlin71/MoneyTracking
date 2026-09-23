@@ -6,6 +6,7 @@ namespace MoneyTracking.Tests;
 
 public class KeywordSearchTests
 {
+    // Default parameter values let tests omit amount/month/type when only the title matters
     private static MoneyItem Item(string title, decimal amount = 100m, int month = 1, ItemType type = ItemType.Income) =>
         new(Guid.NewGuid(), title, amount, month, type);
 
