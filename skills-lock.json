@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "genoffice": {
+      "source": "genspark-ai/genoffice",
+      "sourceType": "github",
+      "skillPath": "skills/genoffice/SKILL.md",
+      "computedHash": "7762fee4b03a042f8b8eeee6a575bf6ae45602beedcf06d94ff61cf9136744ac"
+    }
+  }
+}
