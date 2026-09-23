@@ -29,7 +29,7 @@ while (true)
     Console.WriteLine("2. Add New Expense / Income");
     Console.WriteLine("3. Edit Item (edit, remove)");
     Console.WriteLine("4. Sort items by month, amount, or title");
-    Console.WriteLine("5. Filter to show only income or only expenses");
+    Console.WriteLine("5. Filter by type and optional month");
     Console.WriteLine("6. Search by title keyword");
     Console.WriteLine("7. Discard unsaved changes");
     Console.WriteLine("0. Save and Quit");
@@ -140,6 +140,7 @@ static void EditOrRemove(ItemCollection collection)
     }
 }
 
+// Searches all items whose title contains the keyword (case-insensitive) and prints the results
 static void SearchItems(ItemCollection collection)
 {
     string keyword = PromptNonEmpty("Search title: ");
@@ -233,10 +234,25 @@ static bool PromptAscending()
     }
 }
 
+// Asks which type to show, then optionally a month, then prints the matching items
 static void FilterItems(ItemCollection collection)
 {
-    ItemType type = PromptItemType();
-    PrintList(collection.GetFiltered(type));
+    ItemType type  = PromptItemType();
+    int? month     = PromptOptionalMonth();
+    PrintList(collection.GetFiltered(type, month));
+}
+
+// Returns null if the user presses Enter, meaning no month restriction
+static int? PromptOptionalMonth()
+{
+    while (true)
+    {
+        Console.Write("Month (1-12, or Enter for all months): ");
+        string input = Console.ReadLine() ?? "";
+        if (input.Length == 0) return null;
+        if (int.TryParse(input, out int m) && m >= 1 && m <= 12) return m;
+        Console.WriteLine("Month must be 1–12, or press Enter to skip.");
+    }
 }
 
 // Keeps looping until the user enters a valid type choice
@@ -270,6 +286,7 @@ static void EditItem(ItemCollection collection)
     Console.Write($"Amount [{existing.Amount:F2}]: ");
     // Replace comma with dot so users can type either 1250,50 or 1250.50
     string amountInput = (Console.ReadLine() ?? "").Replace(',', '.');
+    // If the input is empty or not a valid positive number, keep the existing amount unchanged
     decimal amount = decimal.TryParse(amountInput, System.Globalization.NumberStyles.Any,
         System.Globalization.CultureInfo.InvariantCulture, out decimal a) && a > 0 ? a : existing.Amount;
 

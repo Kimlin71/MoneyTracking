@@ -48,7 +48,7 @@ Money Tracking is a command-line application that lets you record, view, sort, f
 | Edit items | Re-prompt title, amount, and month; press Enter to keep current value |
 | Remove items | Select by 1-based display index; confirmed by stable `Guid` identity |
 | Sort | By month, amount, or title — ascending or descending |
-| Filter | Show only income or only expenses |
+| Filter | Show only income or only expenses, with optional month restriction |
 | Search | Case-insensitive substring match on title |
 | Save | Atomic write to `moneyitems.json` (temp file + move, no data corruption) |
 | Discard | Reload last saved state with confirmation prompt |

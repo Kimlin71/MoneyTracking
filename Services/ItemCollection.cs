@@ -20,6 +20,7 @@ public class ItemCollection
         return true;
     }
 
+    // Replaces the item at the found position; does nothing if the Id is not in the list
     public void Replace(Guid id, MoneyItem updated)
     {
         int index = _items.FindIndex(i => i.Id == id);
@@ -45,6 +46,11 @@ public class ItemCollection
     // Where is LINQ for filtering — it keeps only items where the condition is true
     public IReadOnlyList<MoneyItem> GetFiltered(ItemType type) =>
         _items.Where(i => i.Type == type).ToList().AsReadOnly();
+
+    // null month means no month restriction — returns all items of the given type
+    public IReadOnlyList<MoneyItem> GetFiltered(ItemType type, int? month) =>
+        _items.Where(i => i.Type == type && (month == null || i.Month == month))
+              .ToList().AsReadOnly();
 
     // OrdinalIgnoreCase means "Salary" and "salary" both match the keyword
     public IReadOnlyList<MoneyItem> GetByKeyword(string keyword) =>

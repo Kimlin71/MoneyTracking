@@ -1,6 +1,6 @@
 # Acceptance checklist
 
-**Last updated:** 2026-09-22 — Menu redesign applied: save-on-quit, sub-menus, balance header, Type removed from edit
+**Last updated:** 2026-09-23 — Slice 5: month sub-filter added to Filter (option 5)
 
 ---
 
@@ -39,8 +39,8 @@
 | M6 | Can items be sorted by month ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Month, …)` — menu option 4 |
 | M7 | Can items be sorted by amount ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Amount, …)` — menu option 4 |
 | M8 | Can items be sorted by title ascending and descending? | ✅ | `ItemCollection.GetSorted(SortField.Title, …)` — menu option 4 |
-| M9 | Can the display be filtered to show only expense items? | ✅ | `ItemCollection.GetFiltered(ItemType.Expense)` — menu option 5; also accessible via option 1 sub-menu |
-| M10 | Can the display be filtered to show only income items? | ✅ | `ItemCollection.GetFiltered(ItemType.Income)` — menu option 5; also accessible via option 1 sub-menu |
+| M9 | Can the display be filtered to show only expense items? | ✅ | `ItemCollection.GetFiltered(ItemType.Expense, month?)` — menu option 5; optional month sub-filter; also via option 1 sub-menu |
+| M10 | Can the display be filtered to show only income items? | ✅ | `ItemCollection.GetFiltered(ItemType.Income, month?)` — menu option 5; optional month sub-filter; also via option 1 sub-menu |
 
 ### Interaction
 

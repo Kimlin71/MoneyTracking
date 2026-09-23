@@ -401,3 +401,92 @@ No new files. No domain, persistence, or test project changes.
 **Open risks or decisions:** None blocking Slice 4.
 
 **Recommended next agent:** CSharp Implementer — implement `GetByKeyword` in `ItemCollection.cs`, add `SearchItems` and menu wiring in `Program.cs`, apply the two minor fixes, build, verify zero errors.
+
+---
+
+## Slice 5 goal — Month filter added to Filter (option 5)
+
+Extend menu option 5 so the user can optionally narrow results by a specific month in addition to (or instead of) type. Produces visible new behavior with the smallest possible change: one new service method, one extended prompt in `Program.cs`.
+
+Acceptance questions answered by this slice: **M9, M10** (evidence updated — filter now also supports month), **A7** (sort + filter combination: filter-by-month composes with type filter).
+
+### Design decisions for this slice
+
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| Filter UI | Sequential prompts — type first, then optional month | Simplest; keeps each prompt single-purpose |
+| Month prompt | Optional — pressing Enter skips month filtering | Users who only want type-filter are unaffected |
+| Month validation | Same 1–12 guard as `PromptMonth`; Enter = no month filter | Consistent with existing validation pattern |
+| Service method | New `GetFiltered(ItemType type, int? month)` overload | `null` month means "all months"; composable with existing logic |
+| Existing `GetFiltered(ItemType)` | Kept unchanged | All existing callers (`ShowItems`, tests) continue working |
+
+### New service method — `ItemCollection.GetFiltered(ItemType, int?)`
+
+```csharp
+public IReadOnlyList<MoneyItem> GetFiltered(ItemType type, int? month) =>
+    _items.Where(i => i.Type == type && (month == null || i.Month == month))
+          .ToList().AsReadOnly();
+```
+
+`month == null` means no month restriction — returns all items of the given type. This overload resolves unambiguously alongside the existing `GetFiltered(ItemType)` overload.
+
+### Changes to `Program.cs`
+
+**Replace `FilterItems`:**
+
+```csharp
+static void FilterItems(ItemCollection collection)
+{
+    ItemType type = PromptItemType();
+    int? month = PromptOptionalMonth();
+    PrintList(collection.GetFiltered(type, month));
+}
+```
+
+**New helper `PromptOptionalMonth`:**
+
+```csharp
+static int? PromptOptionalMonth()
+{
+    while (true)
+    {
+        Console.Write("Month (1-12, or Enter for all months): ");
+        string input = Console.ReadLine() ?? "";
+        if (input.Length == 0) return null;
+        if (int.TryParse(input, out int m) && m >= 1 && m <= 12) return m;
+        Console.WriteLine("Month must be 1–12, or press Enter to skip.");
+    }
+}
+```
+
+### Layer boundary check
+
+- New overload in `ItemCollection` — no `Console` or `File` references.
+- `PromptOptionalMonth` in `Program.cs` — no domain logic.
+- `PrintList` reused unchanged.
+- Existing `GetFiltered(ItemType)` overload untouched — `ShowItems` and tests continue passing.
+
+---
+
+## Files to create or change in Slice 5
+
+| File | Action |
+|------|--------|
+| `Services/ItemCollection.cs` | **Edit** — add `GetFiltered(ItemType type, int? month)` overload |
+| `Program.cs` | **Edit** — update `FilterItems`, add `PromptOptionalMonth` |
+
+No new files. No domain, persistence, or test project changes needed (existing filter tests still pass; new overload can optionally be tested).
+
+---
+
+## Handoff
+
+**Summary:** Slice 5 adds an optional month sub-filter to the existing type-filter (option 5). One new service overload, two changed lines in `Program.cs`, one new helper. The original `GetFiltered(ItemType)` overload is untouched so all 30 existing tests continue to pass.
+
+**Files changed or proposed:** `docs/architecture.md` (this update)
+
+**Verification performed:** Design checked against M9/M10 (filter by type still works), A7 (filter + sort compose correctly — month filter applies before sort). No mandatory behavior is changed.
+
+**Open risks or decisions:** None blocking Slice 5.
+
+**Recommended next agent:** CSharp Implementer — add the overload to `ItemCollection.cs`, update `FilterItems` and add `PromptOptionalMonth` in `Program.cs`, build, verify zero errors and all 30 tests still pass.

@@ -141,4 +141,43 @@ public class ItemCollectionTests
 
         Assert.Empty(c.GetFiltered(ItemType.Expense));
     }
+
+    // ── GetFiltered(type, month) — Slice 5 overload ──────────────────────────
+
+    [Fact]
+    public void GetFiltered_ByTypeAndMonth_ReturnsMatchingItems()
+    {
+        var c = new ItemCollection();
+        c.Add(Item("Salary",    500m, 1, ItemType.Income));
+        c.Add(Item("Freelance", 200m, 2, ItemType.Income));
+        c.Add(Item("Rent",      400m, 1, ItemType.Expense));
+
+        var result = c.GetFiltered(ItemType.Income, month: 1);
+
+        Assert.Single(result);
+        Assert.Equal("Salary", result[0].Title);
+    }
+
+    [Fact]
+    public void GetFiltered_ByTypeAndNullMonth_ReturnsSameAsTypeOnlyOverload()
+    {
+        var c = new ItemCollection();
+        c.Add(Item("Salary",    500m, 1, ItemType.Income));
+        c.Add(Item("Freelance", 200m, 2, ItemType.Income));
+        c.Add(Item("Rent",      400m, 1, ItemType.Expense));
+
+        // null month means no month restriction — result must match the single-argument overload
+        Assert.Equal(
+            c.GetFiltered(ItemType.Income).Select(i => i.Id),
+            c.GetFiltered(ItemType.Income, month: null).Select(i => i.Id));
+    }
+
+    [Fact]
+    public void GetFiltered_ByTypeAndMonth_NoMatch_ReturnsEmptyList()
+    {
+        var c = new ItemCollection();
+        c.Add(Item("Salary", 500m, 1, ItemType.Income));
+
+        Assert.Empty(c.GetFiltered(ItemType.Income, month: 6));
+    }
 }

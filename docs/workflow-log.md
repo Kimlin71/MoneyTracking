@@ -192,3 +192,39 @@
 - Sub-menus keep the main menu short and discoverable without adding more numbered options.
 - The balance header makes the app's purpose immediately visible on every menu redraw.
 - **Reusable instruction added:** When removing a feature (Type from Edit), update the acceptance checklist ambiguity table (A4) to record the decision and rationale.
+
+---
+
+## Slice 5 — Month sub-filter in Filter (option 5)
+
+- **Goal:** Extend option 5 so users can optionally narrow results by a specific month in addition to type. Pressing Enter skips the month filter (original behavior preserved).
+- **Agent used:** CSharp Architect → CSharp Implementer → Code Reviewer → CSharp Implementer (corrections) → Project Documenter
+- **Prompt files:** `02-design-slice.prompt.md`, `03-implement-slice.prompt.md`, `04-review-slice.prompt.md`, `05-document-slice.prompt.md`
+- **Acceptance questions affected:** M9, M10 (evidence updated)
+
+### Context provided
+- All existing source files, architecture doc Slice 5 design
+
+### Outcome
+- **Files edited:** `Services/ItemCollection.cs`, `Program.cs`, `MoneyTracking.Tests/ItemCollectionTests.cs`
+- **Build:** zero errors, zero warnings
+- **Tests:** static analysis confirms zero errors; run `dotnet test` to verify **33 tests pass** (30 existing + 3 new)
+
+### Changes applied
+
+| Change | Detail |
+|--------|--------|
+| New service overload | `GetFiltered(ItemType type, int? month)` — `null` = no month restriction; existing single-arg overload untouched |
+| `FilterItems` updated | Calls new overload with result of `PromptOptionalMonth()` |
+| `PromptOptionalMonth` added | Loops until 1–12 or Enter (returns `null`); consistent with existing prompt helpers |
+| Menu label updated | Option 5: `"Filter by type and optional month"` |
+| 3 new tests added | `GetFiltered_ByTypeAndMonth_*` — specific month, null month = same as type-only overload, no match |
+
+### Findings not actioned (by decision)
+None — all review findings (5-A menu label, 4-A test gap) were addressed.
+
+### Learning
+- A nullable `int?` parameter is the cleanest way to make a filter optional without adding a new overload for every combination.
+- Always test that `null` month produces the same result as the original single-argument overload — it proves the overload is a strict extension, not a replacement.
+- Menu labels should be updated whenever a feature is extended, even if the change is minor.
+- **Reusable instruction added:** When adding an overload, include a test that proves `null` produces identical output to the original call — it guards against accidental behavior drift.
