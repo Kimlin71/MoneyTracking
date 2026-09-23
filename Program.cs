@@ -1,7 +1,8 @@
 ﻿using MoneyTracking.Domain;
 using MoneyTracking.Services;
 
-const string DataFile = "moneyitems.json";
+// AppContext.BaseDirectory points to the folder containing the executable — reliable regardless of working directory
+string DataFile = Path.Combine(AppContext.BaseDirectory, "moneyitems.json");
 
 var collection = new ItemCollection();
 foreach (MoneyItem item in JsonPersistence.Load(DataFile))
@@ -32,6 +33,7 @@ while (true)
     Console.WriteLine("5. Filter by type and optional month");
     Console.WriteLine("6. Search by title keyword");
     Console.WriteLine("7. Discard unsaved changes");
+    Console.WriteLine("8. Export to CSV");
     Console.WriteLine("0. Save and Quit");
     Console.Write(">> ");
 
@@ -62,6 +64,10 @@ while (true)
 
         case "6":
             SearchItems(collection);
+            break;
+
+        case "8":
+            ExportToCsv(collection);
             break;
 
         case "7":
@@ -140,6 +146,21 @@ static void EditOrRemove(ItemCollection collection)
     }
 }
 
+static void ExportToCsv(ItemCollection collection)
+{
+    string path = PromptNonEmpty("Export file path (e.g. export.csv): ");
+    try
+    {
+        IReadOnlyList<MoneyItem> items = collection.GetAll();
+        CsvExport.Export(items, path);
+        Console.WriteLine($"Exported {items.Count} item(s) to {path}");
+    }
+    catch (IOException ex)
+    {
+        Console.Error.WriteLine($"Export failed: {ex.Message}");
+    }
+}
+
 // Searches all items whose title contains the keyword (case-insensitive) and prints the results
 static void SearchItems(ItemCollection collection)
 {
@@ -179,9 +200,9 @@ static void PrintList(IReadOnlyList<MoneyItem> items)
     decimal expenses = items.Where(i => i.Type == ItemType.Expense).Sum(i => i.Amount);
     decimal balance  = income - expenses;
     string sign = balance >= 0 ? "+" : "";
-    // Labels left-align in 11 chars (= # + Month columns); values right-align in 10 (= Amount column)
-    string summaryLine = $"{"Income:",-11}{income,10:F2}  {"Expenses:",-11}{expenses,10:F2}  Balance: {sign}{balance:F2}";
-    Console.WriteLine(new string('-', summaryLine.Length));
+    // Compact labels keep the summary line close to the table width
+    string summaryLine = $"{"Income:",-9}{income,10:F2} {"Expenses:",-9}{expenses,10:F2} Balance: {sign}{balance:F2}";
+    Console.WriteLine(new string('-', Math.Max(54, summaryLine.Length)));
     Console.WriteLine(summaryLine);
 }
 

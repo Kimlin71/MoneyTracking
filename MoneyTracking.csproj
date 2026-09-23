@@ -13,4 +13,11 @@
     <Compile Remove="MoneyTracking.Tests/**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Copy mock data to output so dotnet run finds it from any working directory -->
+    <Content Include="moneyitems.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

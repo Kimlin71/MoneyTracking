@@ -180,4 +180,59 @@ public class ItemCollectionTests
 
         Assert.Empty(c.GetFiltered(ItemType.Income, month: 6));
     }
+
+    // ── Remove ───────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Remove_ExistingId_RemovesItemAndReturnsTrue()
+    {
+        var c = new ItemCollection();
+        MoneyItem item = Item("Salary", 500m, 1);
+        c.Add(item);
+
+        bool removed = c.Remove(item.Id);
+
+        Assert.True(removed);
+        Assert.Empty(c.GetAll());
+    }
+
+    [Fact]
+    public void Remove_UnknownId_ReturnsFalseAndLeavesListUnchanged()
+    {
+        var c = new ItemCollection();
+        c.Add(Item("Salary", 500m, 1));
+
+        bool removed = c.Remove(Guid.NewGuid());
+
+        Assert.False(removed);
+        Assert.Single(c.GetAll());
+    }
+
+    // ── Replace ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Replace_ExistingId_UpdatesItem()
+    {
+        var c = new ItemCollection();
+        MoneyItem original = Item("Old", 100m, 1);
+        c.Add(original);
+
+        c.Replace(original.Id, original with { Title = "New", Amount = 200m });
+
+        MoneyItem updated = c.GetAll()[0];
+        Assert.Equal("New", updated.Title);
+        Assert.Equal(200m, updated.Amount);
+        Assert.Equal(original.Id, updated.Id);
+    }
+
+    [Fact]
+    public void Replace_UnknownId_DoesNothing()
+    {
+        var c = new ItemCollection();
+        c.Add(Item("Salary", 500m, 1));
+
+        c.Replace(Guid.NewGuid(), Item("Other", 999m, 6));
+
+        Assert.Equal("Salary", c.GetAll()[0].Title);
+    }
 }

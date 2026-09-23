@@ -28,3 +28,4 @@
 /Users/kim/GitRepos/MoneyTracking/obj/Debug/net10.0/MoneyTracking.pdb
 /Users/kim/GitRepos/MoneyTracking/obj/Debug/net10.0/MoneyTracking.genruntimeconfig.cache
 /Users/kim/GitRepos/MoneyTracking/obj/Debug/net10.0/ref/MoneyTracking.dll
+/Users/kim/GitRepos/MoneyTracking/bin/Debug/net10.0/moneyitems.json

@@ -1,6 +1,6 @@
 # Architecture — Slice 1: Domain model + in-memory list + display
 
-**Last updated:** 2026-09-21
+**Last updated:** 2026-09-23
 
 ---
 
@@ -158,6 +158,60 @@ Namespace: `MoneyTracking.Services`
 |--------|-----------|-----------|
 | `Save` | `static void Save(IReadOnlyList<MoneyItem> items, string path)` | Serializes to JSON and writes to `path`. Throws `IOException` on disk error (caller prints message). |
 | `Load` | `static IReadOnlyList<MoneyItem> Load(string path)` | Missing file → returns empty list (satisfies M19). Malformed JSON → prints a message to `Console.Error` and returns empty list (satisfies M20). |
+
+---
+
+## Slice 6 goal — Export to CSV (new feature)
+
+Produce the smallest change that lets a user export the current item list to a CSV file from the main menu. No new domain types are needed.
+
+Acceptance questions answered by this slice: none currently in the checklist — this is a new capability. A new checklist entry **E1** is recommended after implementation is verified.
+
+### Design
+
+The feature follows the same layer boundary rules as all other slices:
+
+- A new **service** `CsvExport` handles all file I/O and formatting — no `Console` calls inside it.
+- `Program.cs` adds one new menu option, prompts for a file path, calls the service, and prints success or error.
+- The CSV format is simple: a header row followed by one data row per item, with fields quoted only when they contain a comma.
+
+#### New file — `Services/CsvExport.cs`
+
+Namespace: `MoneyTracking.Services`
+
+| Member | Signature | Behaviour |
+|--------|-----------|-----------|
+| `Export` | `static void Export(IReadOnlyList<MoneyItem> items, string path)` | Writes UTF-8 CSV to `path`. First row is the header. Throws `IOException` on disk error (caller prints message). |
+
+CSV columns (in order): `Id,Title,Amount,Month,Type`
+
+Field rules:
+- `Amount` is written with `F2` and invariant culture (dot decimal separator).
+- `Title` is wrapped in double quotes and any embedded double-quote is escaped as `""`.
+- All other fields are written as-is (no quoting needed — `Guid`, `int`, and enum names contain no commas or quotes).
+
+#### Changed file — `Program.cs`
+
+- Renumber the existing menu option `7. Discard unsaved changes` → no renumber needed; add `8. Export to CSV` as the new last numbered option before `0. Save and Quit`.
+- Add `case "8"` in the switch that calls a new local function `ExportToCsv(collection)`.
+- `ExportToCsv` prompts for a file path (non-empty), calls `CsvExport.Export`, prints a confirmation, and catches `IOException` to print an error without crashing.
+
+#### New test — `MoneyTracking.Tests/CsvExportTests.cs`
+
+| Test | What it verifies |
+|------|-----------------|
+| `Export_WritesHeaderAndOneRow` | A single item produces a correct header and one data row. |
+| `Export_EmptyList_WritesHeaderOnly` | An empty collection produces only the header row — no crash. |
+| `Export_TitleWithComma_IsQuoted` | A title containing a comma is wrapped in double quotes in the output. |
+
+### Files to create or change in Slice 6
+
+| File | Action |
+|------|--------|
+| `MoneyTracking/Services/CsvExport.cs` | **Create** — static export service |
+| `MoneyTracking/Program.cs` | **Change** — add menu option 8 and `ExportToCsv` local function |
+| `MoneyTracking.Tests/CsvExportTests.cs` | **Create** — three deterministic unit tests |
+| `docs/acceptance-checklist.md` | **Change** — add row E1 after implementation is verified |
 
 **Serialization details:**
 - Uses `System.Text.Json` (already in .NET 10, no extra packages).
