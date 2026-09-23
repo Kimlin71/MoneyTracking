@@ -319,3 +319,85 @@ No other files change.
 - `Console.ForegroundColor` is a global process-level setting; if future code adds threading this could race. Not a concern for a single-threaded console app.
 
 **Recommended next agent:** CSharp Implementer — edit `PrintList` in `Program.cs` as described, build, and do a manual visual check to verify green/red rows and the summary line appear correctly.
+
+---
+
+## Slice 4 goal — Keyword search (O3) + two minor fixes
+
+Produce a new menu option that lets the user search items by title keyword. Also fix two open risks from the previous handoff (noted below). All changes are in `Program.cs` and `Services/ItemCollection.cs` only.
+
+Acceptance questions answered by this slice: **O3**
+
+### Design decisions for this slice
+
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| Menu slot | Option `7` | Free slot; does not conflict with any existing option |
+| Search scope | Title only, case-insensitive, substring match | Simplest useful behavior; no new domain types needed |
+| Empty search term | Re-prompt until user types something | Consistent with `PromptNonEmpty` pattern already used |
+| Zero results | Print "No items match." and return | Same guard as `PrintList` empty-list branch |
+| Where search lives | New method `GetByKeyword(string keyword)` in `ItemCollection` | Keeps domain logic out of `Program.cs`; testable |
+| Display | Passes result to existing `PrintList` | Reuses color, summary, and column formatting for free |
+
+### New method — `ItemCollection.GetByKeyword`
+
+```csharp
+public IReadOnlyList<MoneyItem> GetByKeyword(string keyword) =>
+    _items.Where(i => i.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+          .ToList().AsReadOnly();
+```
+
+- `OrdinalIgnoreCase` avoids locale-dependent comparison without extra packages.
+- Returns `IReadOnlyList` consistent with all other `ItemCollection` query methods.
+
+### Changes to `Program.cs`
+
+1. Add `(7) Search by title keyword` to the menu `WriteLine` block.
+2. Add `case "7": SearchItems(collection); break;` to the switch.
+3. Add static function `SearchItems`:
+
+```csharp
+static void SearchItems(ItemCollection collection)
+{
+    string keyword = PromptNonEmpty("Search title: ");
+    PrintList(collection.GetByKeyword(keyword));
+}
+```
+
+### Two minor fixes included in this slice
+
+| Risk (from previous handoff) | Fix |
+|------------------------------|-----|
+| `EditItem` amount field uses system culture `TryParse` | Apply same `NumberStyles.Any, CultureInfo.InvariantCulture` as `PromptDecimal` |
+| `AddOrChooseType` silently defaults to Income on invalid input | Change `_` catch-all to a `while` loop that re-prompts — consistent with `PromptItemType` |
+
+### Layer boundary check
+
+- `GetByKeyword` lives in `Services/ItemCollection.cs` — no `Console` reference.
+- `SearchItems` lives in `Program.cs` — no domain/service logic.
+- `PrintList` is reused unchanged.
+
+---
+
+## Files to create or change in Slice 4
+
+| File | Action |
+|------|--------|
+| `Services/ItemCollection.cs` | **Edit** — add `GetByKeyword` method |
+| `Program.cs` | **Edit** — menu line, switch case, `SearchItems` function, fix Edit amount culture, fix AddOrChooseType loop |
+
+No new files. No domain, persistence, or test project changes.
+
+---
+
+## Handoff
+
+**Summary:** Slice 4 adds keyword search as menu option 7 via a new `GetByKeyword` method in `ItemCollection`. Two minor robustness fixes are bundled (culture on edit amount, re-prompt on invalid add-type). No structural changes to any other feature.
+
+**Files changed or proposed:** `docs/architecture.md` (this update)
+
+**Verification performed:** Design checked against O3 acceptance question and constraint C3 (distinct from type-filter option 5). `GetByKeyword` uses `OrdinalIgnoreCase` — correct for locale-safe title search. `PrintList` reused unchanged.
+
+**Open risks or decisions:** None blocking Slice 4.
+
+**Recommended next agent:** CSharp Implementer — implement `GetByKeyword` in `ItemCollection.cs`, add `SearchItems` and menu wiring in `Program.cs`, apply the two minor fixes, build, verify zero errors.

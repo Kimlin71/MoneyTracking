@@ -12,17 +12,28 @@ while (true)
 {
     Console.WriteLine();
     Console.WriteLine("=== Money Tracker ===");
-    Console.WriteLine("1. List all");
-    Console.WriteLine("2. Add income");
-    Console.WriteLine("3. Add expense");
-    Console.WriteLine("4. Sort");
-    Console.WriteLine("5. Filter");
-    Console.WriteLine("6. Edit");
-    Console.WriteLine("7. Remove");
-    Console.WriteLine("8. Save");
-    Console.WriteLine("9. Load");
-    Console.WriteLine("0. Quit");
-    Console.Write("> ");
+
+    // Show the current balance in the header so the user always sees their financial position
+    decimal headerIncome   = collection.GetAll().Where(i => i.Type == ItemType.Income).Sum(i => i.Amount);
+    decimal headerExpenses = collection.GetAll().Where(i => i.Type == ItemType.Expense).Sum(i => i.Amount);
+    decimal headerBalance  = headerIncome - headerExpenses;
+    string headerSign = headerBalance >= 0 ? "+" : "";
+    Console.Write("You currently have ");
+    Console.ForegroundColor = headerBalance >= 0 ? ConsoleColor.Green : ConsoleColor.Red;
+    try { Console.Write($"{headerSign}{headerBalance:F2} kr"); }
+    finally { Console.ResetColor(); }
+    Console.WriteLine(" on your account.");
+    Console.WriteLine();
+    Console.WriteLine("Pick an option:");
+    Console.WriteLine("1. Show items (All / Expenses / Incomes)");
+    Console.WriteLine("2. Add New Expense / Income");
+    Console.WriteLine("3. Edit Item (edit, remove)");
+    Console.WriteLine("4. Sort items by month, amount, or title");
+    Console.WriteLine("5. Filter to show only income or only expenses");
+    Console.WriteLine("6. Search by title keyword");
+    Console.WriteLine("7. Discard unsaved changes");
+    Console.WriteLine("0. Save and Quit");
+    Console.Write(">> ");
 
     // ?? "" means: if ReadLine returns null (e.g. piped input ends), treat it as empty
     string choice = Console.ReadLine() ?? "";
@@ -30,15 +41,15 @@ while (true)
     switch (choice)
     {
         case "1":
-            PrintList(collection.GetAll());
+            ShowItems(collection);
             break;
 
         case "2":
-            AddItem(collection, ItemType.Income);
+            AddOrChooseType(collection);
             break;
 
         case "3":
-            AddItem(collection, ItemType.Expense);
+            EditOrRemove(collection);
             break;
 
         case "4":
@@ -50,40 +61,89 @@ while (true)
             break;
 
         case "6":
-            EditItem(collection);
+            SearchItems(collection);
             break;
 
         case "7":
-            RemoveItem(collection);
+            Console.Write("Are you sure? This discards all unsaved changes. y/n: ");
+            if ((Console.ReadLine() ?? "").Trim().Equals("y", StringComparison.OrdinalIgnoreCase))
+            {
+                collection = new ItemCollection();
+                foreach (MoneyItem loaded in JsonPersistence.Load(DataFile))
+                    collection.Add(loaded);
+                Console.WriteLine("Changes discarded. Data reloaded from file.");
+            }
+            else
+            {
+                Console.WriteLine("Cancelled.");
+            }
             break;
 
-        case "8":
+        // Save then exit
+        case "0":
             try
             {
                 JsonPersistence.Save(collection.GetAll(), DataFile);
-                Console.WriteLine($"Saved to {DataFile}.");
+                Console.WriteLine("Saved. Goodbye!");
             }
             catch (IOException ex)
             {
                 Console.Error.WriteLine($"Save failed: {ex.Message}");
             }
-            break;
-
-        case "9":
-            collection = new ItemCollection();
-            foreach (MoneyItem loaded in JsonPersistence.Load(DataFile))
-                collection.Add(loaded);
-            Console.WriteLine($"Loaded from {DataFile}.");
-            break;
-
-        // return exits the top-level program, ending the process cleanly
-        case "0":
             return;
 
         default:
             Console.WriteLine("Invalid choice, please try again.");
             break;
     }
+}
+
+// Show sub-menu: all items, only expenses, or only incomes
+static void ShowItems(ItemCollection collection)
+{
+    Console.WriteLine("Show: 1=All  2=Expenses  3=Incomes");
+    switch (Console.ReadLine() ?? "")
+    {
+        case "2": PrintList(collection.GetFiltered(ItemType.Expense)); break;
+        case "3": PrintList(collection.GetFiltered(ItemType.Income));  break;
+        default:  PrintList(collection.GetAll());                      break;
+    }
+}
+
+// Prompt for income or expense then add
+static void AddOrChooseType(ItemCollection collection)
+{
+    while (true)
+    {
+        Console.WriteLine("Add: 1=Income  2=Expense");
+        switch (Console.ReadLine() ?? "")
+        {
+            case "1": AddItem(collection, ItemType.Income);  return;
+            case "2": AddItem(collection, ItemType.Expense); return;
+            default: Console.WriteLine("Enter 1 for Income or 2 for Expense."); break;
+        }
+    }
+}
+
+// Edit or remove sub-menu
+static void EditOrRemove(ItemCollection collection)
+{
+    while (true)
+    {
+        Console.WriteLine("1=Edit  2=Remove");
+        switch (Console.ReadLine() ?? "")
+        {
+            case "1": EditItem(collection);   return;
+            case "2": RemoveItem(collection); return;
+            default: Console.WriteLine("Enter 1 to edit or 2 to remove."); break;
+        }
+    }
+}
+
+static void SearchItems(ItemCollection collection)
+{
+    string keyword = PromptNonEmpty("Search title: ");
+    PrintList(collection.GetByKeyword(keyword));
 }
 
 static void PrintList(IReadOnlyList<MoneyItem> items)
@@ -118,8 +178,10 @@ static void PrintList(IReadOnlyList<MoneyItem> items)
     decimal expenses = items.Where(i => i.Type == ItemType.Expense).Sum(i => i.Amount);
     decimal balance  = income - expenses;
     string sign = balance >= 0 ? "+" : "";
-    Console.WriteLine(new string('-', 54));
-    Console.WriteLine($"{"Income:",-12} {income,10:F2}   {"Expenses:",-12} {expenses,10:F2}   Balance: {sign}{balance:F2}");
+    // Labels left-align in 11 chars (= # + Month columns); values right-align in 10 (= Amount column)
+    string summaryLine = $"{"Income:",-11}{income,10:F2}  {"Expenses:",-11}{expenses,10:F2}  Balance: {sign}{balance:F2}";
+    Console.WriteLine(new string('-', summaryLine.Length));
+    Console.WriteLine(summaryLine);
 }
 
 static void AddItem(ItemCollection collection, ItemType type)
@@ -129,7 +191,7 @@ static void AddItem(ItemCollection collection, ItemType type)
     int month = PromptMonth("Month (1-12): ");
     // Guid.NewGuid() creates a unique ID that will never collide, even across restarts
     collection.Add(new MoneyItem(Guid.NewGuid(), title, amount, month, type));
-    Console.WriteLine("Added.");
+    Console.WriteLine("Added. (Choose '0. Save and Quit' to save your changes.)");
 }
 
 // Asks the user which field and direction to sort by, then prints the sorted result
@@ -206,27 +268,19 @@ static void EditItem(ItemCollection collection)
     string title = Console.ReadLine() is { Length: > 0 } t ? t : existing.Title;
 
     Console.Write($"Amount [{existing.Amount:F2}]: ");
-    string amountInput = Console.ReadLine() ?? "";
-    // Keep the existing value if the input is empty or not a valid positive number
-    decimal amount = decimal.TryParse(amountInput, out decimal a) && a > 0 ? a : existing.Amount;
+    // Replace comma with dot so users can type either 1250,50 or 1250.50
+    string amountInput = (Console.ReadLine() ?? "").Replace(',', '.');
+    decimal amount = decimal.TryParse(amountInput, System.Globalization.NumberStyles.Any,
+        System.Globalization.CultureInfo.InvariantCulture, out decimal a) && a > 0 ? a : existing.Amount;
 
     Console.Write($"Month [{existing.Month}]: ");
     string monthInput = Console.ReadLine() ?? "";
     // Keep the existing value if the input is empty or outside 1-12
     int month = int.TryParse(monthInput, out int m) && m >= 1 && m <= 12 ? m : existing.Month;
 
-    Console.WriteLine($"Type: 1=Income  2=Expense  (current: {existing.Type})");
-    // _ is the discard pattern - matches anything not already handled, keeping the existing type
-    ItemType type = Console.ReadLine() switch
-    {
-        "1" => ItemType.Income,
-        "2" => ItemType.Expense,
-        _   => existing.Type
-    };
-
     // 'with' creates a new record copying all fields, then overrides only the ones listed
-    collection.Replace(existing.Id, existing with { Title = title, Amount = amount, Month = month, Type = type });
-    Console.WriteLine("Updated.");
+    collection.Replace(existing.Id, existing with { Title = title, Amount = amount, Month = month });
+    Console.WriteLine("Updated. (Choose '0. Save and Quit' to save your changes.)");
 }
 
 static void RemoveItem(ItemCollection collection)
@@ -238,7 +292,7 @@ static void RemoveItem(ItemCollection collection)
     int index = PromptIndex("Remove #: ", all.Count);
     // Remove by Id rather than index so a future concurrent edit cannot target the wrong item
     collection.Remove(all[index - 1].Id);
-    Console.WriteLine("Removed.");
+    Console.WriteLine("Removed. (Choose '0. Save and Quit' to save your changes.)");
 }
 
 // Repeats the prompt until the user types at least one character
@@ -259,9 +313,11 @@ static decimal PromptDecimal(string prompt)
     while (true)
     {
         Console.Write(prompt);
-        if (decimal.TryParse(Console.ReadLine(), System.Globalization.NumberStyles.Any,
+        // Replace comma with dot so users can type either 1250,50 or 1250.50
+        string raw = (Console.ReadLine() ?? "").Replace(',', '.');
+        if (decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out decimal value) && value > 0) return value;
-        Console.WriteLine("Enter a positive number (use . as decimal separator).");
+        Console.WriteLine("Enter a positive number.");
     }
 }
 

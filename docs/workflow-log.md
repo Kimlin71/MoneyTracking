@@ -149,3 +149,46 @@
 - Summary computed from the passed-in list (not `GetAll()`) is the right pattern: the same function works correctly for filtered and sorted views without any change.
 - Adding color and totals to an existing display function requires zero changes to domain, service, or persistence layers — a clean demonstration of layer separation.
 - **Reusable instruction added:** Always wrap `Console.ForegroundColor` changes in `try/finally { Console.ResetColor(); }` to prevent terminal color bleed.
+
+---
+
+## Slices 4+ — UX redesign, keyword search, tests, and robustness fixes
+
+- **Goal:** Add keyword search (O3), redesign menu UX to match student presentation style, fix two input robustness issues, add 17 new tests covering search and decimal parsing.
+- **Agent used:** CSharp Architect (design) → CSharp Implementer (multiple passes) → Code Reviewer → Project Documenter
+- **Prompt files:** `02-design-slice.prompt.md`, `03-implement-slice.prompt.md`, `04-review-slice.prompt.md`, `05-document-slice.prompt.md`
+- **Acceptance questions answered:** O3 ✅; O1 extended (balance also shown in menu header)
+
+### Context provided
+- All existing source files, acceptance checklist, architecture doc Slice 4 design
+
+### Outcome
+- **Files edited:** `Program.cs` (all changes below), `Services/ItemCollection.cs` (new method)
+- **Files created:** `MoneyTracking.Tests/KeywordSearchTests.cs` (8 tests), `MoneyTracking.Tests/DecimalParsingTests.cs` (9 tests)
+- **Build:** zero errors, zero warnings
+- **Tests:** `dotnet test` — **30 tests, 0 failed, 0 skipped** (verified by user)
+
+### Changes applied
+
+| Change | Detail |
+|--------|--------|
+| Keyword search | `ItemCollection.GetByKeyword(string)` — case-insensitive substring match on Title; `SearchItems()` in `Program.cs`; menu option 6 |
+| Balance header | Current balance shown in green/red above the menu before every prompt |
+| Menu redesign | Numbered list with descriptions; sub-menus for Show / Add / Edit+Remove |
+| Save and Quit | Option 0 saves then exits; removed separate Save option |
+| Discard unsaved | Option 7 with `y/n` confirmation prompt — reloads from last saved file |
+| Type removed from Edit | Type is set at add time and not editable (A4 update) |
+| `EditOrRemove` re-prompt | Loops on invalid input, consistent with other sub-menus |
+| Decimal input fix | Both `PromptDecimal` and `EditItem` amount accept comma or dot as separator |
+| Summary alignment | Separator auto-sizes to match summary line width |
+| `AddOrChooseType` fix | Loops on invalid input instead of silently defaulting to Income |
+| Mock data | 10 realistic items in `moneyitems.json` for demo |
+| Save reminders | Added after Add, Edit, Remove: `"Choose '0. Save and Quit' to save"` |
+
+### Learning
+- `GetByKeyword` using `StringComparison.OrdinalIgnoreCase` is the correct locale-safe approach for a student project — no regex needed.
+- Accepting both `.` and `,` via `.Replace(',', '.')` before `TryParse` with `InvariantCulture` solves the Swedish locale issue cleanly without changing the domain model.
+- Dynamic separator width (`summaryLine.Length`) is simpler and more correct than a hardcoded constant.
+- Sub-menus keep the main menu short and discoverable without adding more numbered options.
+- The balance header makes the app's purpose immediately visible on every menu redraw.
+- **Reusable instruction added:** When removing a feature (Type from Edit), update the acceptance checklist ambiguity table (A4) to record the decision and rationale.

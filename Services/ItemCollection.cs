@@ -45,4 +45,9 @@ public class ItemCollection
     // Where is LINQ for filtering — it keeps only items where the condition is true
     public IReadOnlyList<MoneyItem> GetFiltered(ItemType type) =>
         _items.Where(i => i.Type == type).ToList().AsReadOnly();
+
+    // OrdinalIgnoreCase means "Salary" and "salary" both match the keyword
+    public IReadOnlyList<MoneyItem> GetByKeyword(string keyword) =>
+        _items.Where(i => i.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+              .ToList().AsReadOnly();
 }
