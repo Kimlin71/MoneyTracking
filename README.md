@@ -1,4 +1,4 @@
-# 💰 Money Tracking
+# Money Tracking
 
 > A C# (.NET 10) console application for tracking personal income and expenses — with color output, keyword search, CSV export, JSON persistence, and 47 unit tests.
 
