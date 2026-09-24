@@ -1,0 +1,275 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="page-1" name="Class Diagram">
+    <mxGraphModel dx="1973" dy="1212" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pkg-domain" parent="1" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;dashed=1;dashPattern=8 4;rounded=1;" value="«package» Domain" vertex="1">
+          <mxGeometry height="760" width="380" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MoneyItem-header" parent="pkg-domain" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" value="&lt;i&gt;«record»&lt;/i&gt;&lt;br&gt;&lt;b&gt;MoneyItem&lt;/b&gt;" vertex="1">
+          <mxGeometry height="240" width="320" x="30" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-f1" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Id : Guid" vertex="1">
+          <mxGeometry height="22" width="320" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-f2" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Title : string" vertex="1">
+          <mxGeometry height="22" width="320" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-f3" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Amount : decimal" vertex="1">
+          <mxGeometry height="22" width="320" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-f4" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Month : int  &lt;i&gt;// 1–12&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="320" y="112" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-f5" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Type : ItemType" vertex="1">
+          <mxGeometry height="22" width="320" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-div" parent="MoneyItem-header" style="line;strokeColor=#6c8ebf;fillColor=none;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="320" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-m1" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;// positional constructor — immutable record&lt;/i&gt;" vertex="1">
+          <mxGeometry height="20" width="320" y="168" as="geometry" />
+        </mxCell>
+        <mxCell id="mi-m2" parent="MoneyItem-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;// &#39;with&#39; expression creates edited copy&lt;/i&gt;" vertex="1">
+          <mxGeometry height="20" width="320" y="188" as="geometry" />
+        </mxCell>
+        <mxCell id="e-jp-mi" edge="1" parent="MoneyItem-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=0.001;entryY=0.077;entryDx=0;entryDy=0;entryPerimeter=0;" target="mi-f4" value="«uses»">
+          <mxGeometry relative="1" x="-0.3785" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="612" />
+              <mxPoint x="-40" y="612" />
+              <mxPoint x="-40" y="113.7" />
+            </Array>
+            <mxPoint x="459.9999999999984" y="610" as="sourcePoint" />
+            <mxPoint x="-9.663381206337363e-13" y="114" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ItemType-header" parent="pkg-domain" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" value="&lt;i&gt;«enum»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ItemType&lt;/b&gt;" vertex="1">
+          <mxGeometry height="120" width="320" x="30" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="it-v1" parent="ItemType-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="Income" vertex="1">
+          <mxGeometry height="22" width="320" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="it-v2" parent="ItemType-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="Expense" vertex="1">
+          <mxGeometry height="22" width="320" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="it-note" parent="ItemType-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;// no methods&lt;/i&gt;" vertex="1">
+          <mxGeometry height="20" width="320" y="92" as="geometry" />
+        </mxCell>
+        <mxCell id="SortField-header" parent="pkg-domain" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" value="&lt;i&gt;«enum»&lt;/i&gt;&lt;br&gt;&lt;b&gt;SortField&lt;/b&gt;" vertex="1">
+          <mxGeometry height="130" width="320" x="30" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-v1" parent="SortField-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="Month" vertex="1">
+          <mxGeometry height="22" width="320" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-v2" parent="SortField-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="Amount" vertex="1">
+          <mxGeometry height="22" width="320" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-v3" parent="SortField-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="Title" vertex="1">
+          <mxGeometry height="22" width="320" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-note" parent="SortField-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;// no methods&lt;/i&gt;" vertex="1">
+          <mxGeometry height="20" width="320" y="112" as="geometry" />
+        </mxCell>
+        <mxCell id="e-mi-it" edge="1" parent="pkg-domain" source="MoneyItem-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ItemType-header" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-mi-sf" edge="1" parent="pkg-domain" source="ItemType-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="SortField-header" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg-services" parent="1" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;dashed=1;dashPattern=8 4;rounded=1;" value="«package» Services" vertex="1">
+          <mxGeometry height="760" width="480" x="500" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ItemCollection-header" parent="pkg-services" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#d5e8d4;strokeColor=#82b366;html=1;" value="&lt;i&gt;«class»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ItemCollection&lt;/b&gt;" vertex="1">
+          <mxGeometry height="440" width="420" x="30" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-flabel" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;field&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-f1" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="- _items : List&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-div" parent="ItemCollection-header" style="line;strokeColor=#82b366;fillColor=none;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-mlabel" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m1" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Add(item : MoneyItem) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="114" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m2" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Remove(id : Guid) : bool" vertex="1">
+          <mxGeometry height="22" width="420" y="136" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m3" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ Replace(id : Guid, updated : MoneyItem) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m4" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ GetAll() : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-ol1label" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;method — overload 1&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="204" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m5" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ GetFiltered(type : ItemType) : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="222" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-ol2label" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;method — overload 2&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="246" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m6" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ GetFiltered(type : ItemType, month : int?) : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m7label" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="288" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m7" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ GetSorted(field : SortField, ascending : bool) : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="306" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m8label" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ic-m8" parent="ItemCollection-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ GetByKeyword(keyword : string) : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="JsonPersistence-header" parent="pkg-services" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#d5e8d4;strokeColor=#82b366;html=1;" value="&lt;i&gt;«static class»&lt;/i&gt;&lt;br&gt;&lt;b&gt;JsonPersistence&lt;/b&gt;" vertex="1">
+          <mxGeometry height="200" width="420" x="30" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-flabel" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;static field&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-f1" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="- {static} _options : JsonSerializerOptions" vertex="1">
+          <mxGeometry height="22" width="420" y="64" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-f2" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="- {static} _readOptions : JsonSerializerOptions  &lt;i&gt;// MaxDepth=8&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-div" parent="JsonPersistence-header" style="line;strokeColor=#82b366;fillColor=none;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-mlabel" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;static method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-m1" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ {static} Save(items : IReadOnlyList&lt;MoneyItem&gt;, path : string) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="jp-m2" parent="JsonPersistence-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ {static} Load(path : string) : IReadOnlyList&lt;MoneyItem&gt;" vertex="1">
+          <mxGeometry height="22" width="420" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg-program" parent="1" style="swimlane;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;dashed=1;dashPattern=8 4;rounded=1;" value="«top-level program» Presentation" vertex="1">
+          <mxGeometry height="760" width="480" x="1060" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="CsvExport-header" parent="pkg-program" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#d5e8d4;strokeColor=#82b366;html=1;" value="&lt;i&gt;«static class»&lt;/i&gt;&lt;br&gt;&lt;b&gt;CsvExport&lt;/b&gt;" vertex="1">
+          <mxGeometry height="220" width="420" x="30" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-nofld" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;// no instance fields&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-div" parent="CsvExport-header" style="line;strokeColor=#82b366;fillColor=none;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="66" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-mlabel" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;static method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-m1" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ {static} Export(items : IReadOnlyList&lt;MoneyItem&gt;, path : string) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="94" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-m2" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="+ {static} IsPathSafe(fullPath : string, safeDir : string) : bool" vertex="1">
+          <mxGeometry height="22" width="420" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-div2" parent="CsvExport-header" style="line;strokeColor=#82b366;fillColor=none;dashed=1;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-pvlabel" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;private static method&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ce-m3" parent="CsvExport-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#666666;" value="- {static} EscapeField(value : string) : string" vertex="1">
+          <mxGeometry height="22" width="420" y="168" as="geometry" />
+        </mxCell>
+        <mxCell id="Program-header" parent="pkg-program" style="swimlane;fontStyle=1;align=center;startSize=46;fillColor=#fff2cc;strokeColor=#d6b656;html=1;" value="&lt;i&gt;«top-level program»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Program&lt;/b&gt;" vertex="1">
+          <mxGeometry height="420" width="420" x="30" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-vlabel" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;local variable&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-v1" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="DataDir : string" vertex="1">
+          <mxGeometry height="22" width="420" y="64" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-v2" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="DataFile : string" vertex="1">
+          <mxGeometry height="22" width="420" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-v3" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="collection : ItemCollection" vertex="1">
+          <mxGeometry height="22" width="420" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-div" parent="Program-header" style="line;strokeColor=#d6b656;fillColor=none;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-flabel" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#888888;fontSize=10;" value="&lt;i&gt;local function (static void/type)&lt;/i&gt;" vertex="1">
+          <mxGeometry height="18" width="420" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f1" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="ShowItems(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f2" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="AddOrChooseType(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="182" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f3" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="EditOrRemove(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="204" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f4" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="EditItem(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="226" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f5" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="RemoveItem(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="248" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f6" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="SortItems(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f7" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="FilterItems(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="292" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f8" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="SearchItems(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="314" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f9" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="ExportToCsv(collection) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="336" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f10" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;" value="PrintList(items : IReadOnlyList&lt;MoneyItem&gt;) : void" vertex="1">
+          <mxGeometry height="22" width="420" y="358" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-f11" parent="Program-header" style="text;strokeColor=none;fillColor=none;align=left;html=1;spacingLeft=8;fontColor=#555555;fontSize=10;" value="PromptNonEmpty / PromptDecimal / PromptMonth / PromptIndex" vertex="1">
+          <mxGeometry height="22" width="420" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="e-ic-mi" edge="1" parent="1" source="ItemCollection-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;" target="MoneyItem-header" value="0..* «uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-ic-sf" edge="1" parent="1" source="ItemCollection-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;" target="SortField-header" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-ic-it" edge="1" parent="1" source="ItemCollection-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;" target="ItemType-header" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-ce-mi" edge="1" parent="1" source="CsvExport-header" style="edgeStyle=orthogonalEdgeStyle;dashed=1;html=1;endArrow=open;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="MoneyItem-header" value="«uses»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1020" y="200" />
+              <mxPoint x="1020" y="20" />
+              <mxPoint x="460" y="20" />
+              <mxPoint x="460" y="170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-pr-ic" edge="1" parent="1" source="Program-header" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;" target="ItemCollection-header" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-pr-jp" edge="1" parent="1" source="Program-header" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;" target="JsonPersistence-header" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-pr-ce" edge="1" parent="1" source="Program-header" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;" target="CsvExport-header" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
