@@ -5,7 +5,6 @@
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)
 ![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)
-![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 
 ---
