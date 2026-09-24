@@ -1,0 +1,72 @@
+@startuml MoneyTracking_UseCaseDiagram
+
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam handwritten false
+
+actor User
+
+package "Mandatory Features" <<Rectangle>> #DAE8FC {
+    UC_Show: Show Items\n(All / Expenses / Incomes)
+    UC_Add: Add New Item\n(Income or Expense)
+    UC_Edit: Edit Existing Item
+    UC_Remove: Remove Existing Item
+    UC_Sort: Sort Items\n(Month / Amount / Title\nAscending or Descending)
+    UC_Filter: Filter Items\n(by Type + optional Month)
+    UC_Save: Save Data to File
+    UC_Load: Load Data from File
+    UC_Quit: Quit Application
+}
+
+package "Optional Features" <<Rectangle>> #D5E8D4 {
+    UC_Balance: View Balance & Totals\n(Total Income, Expenses, Net Balance)
+    UC_Search: Search by Title Keyword
+    UC_CsvExport: Export to CSV File
+    UC_Discard: Discard Unsaved Changes
+    UC_Color: Colored Output Display
+}
+
+User --> UC_Show
+User --> UC_Add
+User --> UC_Edit
+User --> UC_Remove
+User --> UC_Sort
+User --> UC_Filter
+User --> UC_Save
+User --> UC_Load
+User --> UC_Quit
+
+User --> UC_Balance
+User --> UC_Search
+User --> UC_CsvExport
+User --> UC_Discard
+User --> UC_Color
+
+UC_Quit ..> UC_Save : <<include>>
+
+UC_Add ..> UC_Balance : <<extend>>
+UC_Edit ..> UC_Balance : <<extend>>
+UC_Remove ..> UC_Balance : <<extend>>
+
+UC_Show ..> UC_Color : <<extend>>
+
+note right of UC_Load
+  Auto-loads at startup.
+  Missing file -> empty list.
+  Malformed JSON -> empty list + error.
+end note
+
+note bottom of UC_Balance
+  Automatically displayed:
+  - Header (menu)
+  - Below every item list
+  Reflects filtered/sorted views.
+end note
+
+note right of UC_Filter
+  Month filter is optional:
+  Enter = all months
+  1-12 = specific month
+end note
+
+@enduml

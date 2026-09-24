@@ -1,0 +1,118 @@
+@startuml MoneyTracking_ArchitectureDiagram
+
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Money Tracking - Layered Architecture\n(Dependency Rule: Console -> Services -> Domain)
+
+package "Presentation Layer\n<<Boundary>>" as Presentation #FFE8D6 {
+    rectangle "Program.cs (Top-level)\nMenu Loop & Console I/O" as Prog
+    note right of Prog
+      ** Responsibilities:**
+      * Main menu: while-true loop
+      * All Console.WriteLine/ReadLine
+      * User input validation (re-prompt)
+      * Colored output (green/red)
+      * Print table + summary totals
+      NO file I/O, NO domain logic
+    end note
+}
+
+package "Services Layer\n<<Service>>" as Services #DCF5FF {
+    rectangle "ItemCollection\n(Business Logic)" as IC
+    note left of IC
+      ** Owns:** List<MoneyItem>
+      ** Operations:**
+      * Add / Remove / Replace
+      * GetAll / GetSorted
+      * GetFiltered(type)
+      * GetFiltered(type, month?)
+      * GetByKeyword(keyword)
+      Returns: IReadOnlyList
+      NO Console / File refs
+    end note
+
+    rectangle "JsonPersistence\n(File I/O)" as JP
+    note right of JP
+      ** Static class**
+      * Save (atomic via .tmp + Move)
+      * Load (missing -> [], bad JSON -> [])
+      * System.Text.Json only
+      * Unix chmod 600 on save
+      NO Console refs
+    end note
+
+    rectangle "CsvExport\n(Export Service)" as CE
+    note right of CE
+      ** Static class**
+      * Export(items, path) -> CSV
+      * IsPathSafe(path, safeDir)
+      * Header: Id,Title,Amount,Month,Type
+      * Amount F2, InvariantCulture
+      * Escape commas & quotes in Title
+      NO Console refs
+    end note
+}
+
+package "Domain Layer\n<<Domain>>" as Domain #E8DCFF {
+    rectangle "MoneyItem\n(Immutable Record)\nId, Title, Amount, Month, Type" as MI
+    enum "ItemType\n(Enum)\nIncome, Expense" as IT
+    enum "SortField\n(Enum)\nMonth, Amount, Title" as SF
+}
+
+package "Test Project\n<<Tests>>" as Tests #D4F5D4 {
+    rectangle "ItemCollectionTests.cs" as T1
+    rectangle "PersistenceTests.cs" as T2
+    rectangle "DecimalParsingTests.cs" as T3
+    rectangle "KeywordSearchTests.cs" as T4
+    rectangle "CsvExportTests.cs" as T5
+}
+
+package "External Files / Storage" as Storage #FFF8E1 {
+    database "moneyitems.json\n(JSON persistence)" as JsonFile
+    file "export.csv\n(CSV export output)" as CsvFile
+}
+
+' === Presentation -> Services ===
+Prog --> IC : creates & calls
+Prog --> JP : calls Save/Load
+Prog --> CE : calls Export/IsPathSafe
+
+' === Presentation -> Domain ===
+Prog --> MI : constructs & displays
+Prog --> IT : prompts, colors, filters
+Prog --> SF : prompts, sorting
+
+' === Services -> Domain ===
+IC --> MI : aggregates (List<MoneyItem>)
+IC --> IT : GetFiltered uses
+IC --> SF : GetSorted uses
+JP --> MI : serializes/deserializes
+CE --> MI : reads fields for export
+
+' === Tests -> application ===
+T1 --> IC
+T1 --> MI
+T1 --> IT
+T1 --> SF
+T2 --> JP
+T2 --> MI
+T3 --> MI
+T4 --> IC
+T5 --> CE
+T5 --> MI
+
+' === Services <-> Files ===
+JP -- JsonFile : reads/writes
+CE -- CsvFile : writes
+
+legend bottom
+  |= Color |= Layer |= Dependency Direction |
+  |<#FFE8D6>| Presentation / Console | -> Services, -> Domain |
+  |<#DCF5FF>| Services               | -> Domain only        |
+  |<#E8DCFF>| Domain                 | NO outgoing deps      |
+  |<#D4F5D4>| Tests                  | -> All layers         |
+end legend
+
+@enduml
