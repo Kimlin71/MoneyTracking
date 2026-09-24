@@ -317,8 +317,7 @@ Please follow the coding rules in [`.github/copilot-instructions.md`](.github/co
 
 ## License
 
-This project is licensed under the **MIT License**.  
-See [LICENSE](LICENSE) for details.
+This project is licensed under Kimlin71
 
 ---
 
