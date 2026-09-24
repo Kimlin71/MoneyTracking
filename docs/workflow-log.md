@@ -353,3 +353,36 @@ Existing saved data in `bin/Debug/net10.0/moneyitems.json` (or the old working d
 - `File.SetUnixFileMode` (available since .NET 7) is the clean way to enforce `600` permissions without invoking external processes. Always guard it with `OperatingSystem.IsWindows()` so the code compiles and runs on all platforms.
 - `OperatingSystem.IsWindows()` is evaluated at runtime; `RuntimeInformation.IsOSPlatform` is the older equivalent — prefer `OperatingSystem.*` in .NET 5+.
 - **Reusable instruction added:** For any app that stores user data, set the data directory to `LocalApplicationData/<AppName>/` and apply `600` permissions after the first write — both steps are required; the directory alone is not sufficient if it inherits a permissive umask.
+
+---
+
+## Documentation pass — README file structure updated (2026-09-24)
+
+- **Goal:** Update `README.md` to reflect the actual workspace file structure, including files that had accumulated since the last documentation pass.
+- **Agent used:** Project Documenter
+- **Prompt files:** `05-document-slice.prompt.md`
+- **Acceptance questions affected:** none — documentation only
+
+### Context provided
+- Workspace directory listing, all source files, current `README.md`, `docs/workflow-log.md`
+
+### Outcome
+- **Files edited:** `README.md` (Project Structure tree), `docs/workflow-log.md` (this entry)
+- **Build:** not re-run (no code changes)
+- **Tests:** not re-run (no code changes)
+
+### Changes applied
+
+| Change | Detail |
+|--------|--------|
+| Added `MoneyTracking.Tests.csproj` to tree | Was missing from the test folder listing |
+| Added `docs/` subtree with all four files | `security_best_practices_report.md` was previously omitted |
+| Added `media/` folder | `UML Diagram Money Tracker.drawio` now shown |
+| Added `scripts/` folder | `render-uml.js` now shown |
+| Added `MoneyTracking.sln` and `AGENTS.md` | Top-level files that were absent from the tree |
+| Reorganised tree order | `docs/` moved above `Program.cs` to group supporting files together |
+| Added legacy data file note | Explains that `moneyitems.json` at project root is a legacy artifact; live data writes to `LocalApplicationData` |
+
+### Learning
+- The Project Structure tree in a README drifts silently as files are added — verify it against the actual directory listing after every slice.
+- **Reusable instruction:** After any slice that creates or moves files, open the README Project Structure tree and diff it against the actual workspace listing before closing the task.

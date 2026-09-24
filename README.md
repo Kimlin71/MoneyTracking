@@ -199,16 +199,25 @@ MoneyTracking/
 │   ├── DecimalParsingTests.cs   # comma/dot separator — 9 tests
 │   ├── ItemCollectionTests.cs   # sort and filter — 17 tests
 │   ├── KeywordSearchTests.cs    # GetByKeyword — 8 tests
-│   └── PersistenceTests.cs      # round-trip, missing file, malformed JSON, MaxDepth, tmp cleanup — 5 tests
+│   ├── PersistenceTests.cs      # round-trip, missing file, malformed JSON, MaxDepth, tmp cleanup — 5 tests
+│   └── MoneyTracking.Tests.csproj
+├── docs/
+│   ├── acceptance-checklist.md
+│   ├── architecture.md
+│   ├── project-context.md
+│   ├── security_best_practices_report.md
+│   └── workflow-log.md
+├── media/
+│   └── UML Diagram Money Tracker.drawio
+├── scripts/
+│   └── render-uml.js
 ├── Program.cs               # menu loop, console interaction, sub-menus
-├── moneyitems.json          # persisted data (auto-loaded; auto-created on Save and Quit)
 ├── MoneyTracking.csproj
-└── docs/
-    ├── architecture.md
-    ├── acceptance-checklist.md
-    ├── workflow-log.md
-    └── project-context.md
+├── MoneyTracking.sln
+└── AGENTS.md
 ```
+
+> **Note:** `moneyitems.json` in the project root is a legacy artifact. The live data file is written to the OS-standard user-specific directory (see [Data File](#data-file) below).
 
 No class in `Domain/` or `Services/` references `System.Console` or `System.IO` (except `JsonPersistence`). `Program.cs` owns all console interaction.
 
